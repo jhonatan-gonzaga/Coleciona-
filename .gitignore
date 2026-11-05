@@ -1,0 +1,11 @@
+**/node_modules/
+**/.env
+database/data/
+database/logs/
+database/run/
+database/backups/
+storage/uploads/
+storage/tmp/
+**/dist/
+**/coverage/
+*.log
