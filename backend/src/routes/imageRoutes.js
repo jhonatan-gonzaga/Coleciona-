@@ -1,0 +1,10 @@
+const router=require('express').Router();
+const multer=require('multer');
+const catalog=require('../components/CatalogService');
+const {requireAuth}=require('../middleware/authenticate');
+const {asyncRoute}=require('../middleware/errorHandler');
+const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024,files:1}});
+router.put('/:id',requireAuth,upload.single('imagem'),asyncRoute(async(req,res)=>res.json({data:await catalog.replaceImage(req.actorId,req.params.id,req.file)})));
+router.delete('/:id',requireAuth,asyncRoute(async(req,res)=>res.json({data:await catalog.removeImage(req.actorId,req.params.id)})));
+router.get('/:id/arquivo',asyncRoute(async(req,res)=>{const file=await catalog.getImage(req.actorId,req.params.id);res.set({'Content-Type':file.mime,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}).send(file.bytes)}));
+module.exports=router;
