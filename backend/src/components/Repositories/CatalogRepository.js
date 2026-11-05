@@ -1,0 +1,21 @@
+const {db,oid,connect}=require('./mongoClient');
+class CatalogRepository {
+  async collection(id){const _id=oid(id);return _id?(await db()).collection('colecoes').findOne({_id}):null}
+  async item(id){const _id=oid(id);return _id?(await db()).collection('itens').findOne({_id}):null}
+  async myCollections(userId,skip,limit){const filter={usuario_id:oid(userId),estado:'ativa'},d=await db();return {rows:await d.collection('colecoes').find(filter).sort({criado_em:-1}).skip(skip).limit(limit).toArray(),total:await d.collection('colecoes').countDocuments(filter)}}
+  async itemsInCollection(collectionId,skip,limit){const filter={colecao_id:oid(collectionId),estado:'ativo'},d=await db();return {rows:await d.collection('itens').find(filter).sort({criado_em:-1}).skip(skip).limit(limit).toArray(),total:await d.collection('itens').countDocuments(filter)}}
+  async countItems(collectionId){return (await db()).collection('itens').countDocuments({colecao_id:oid(collectionId),estado:'ativo'})}
+  async insertCollection(doc){const result=await (await db()).collection('colecoes').insertOne(doc);return {...doc,_id:result.insertedId}}
+  async updateCollection(id,owner,patch){return (await db()).collection('colecoes').findOneAndUpdate({_id:oid(id),usuario_id:oid(owner),estado:'ativa'},{$set:{...patch,atualizado_em:new Date()}},{returnDocument:'after'})}
+  async updateItem(id,owner,patch){return (await db()).collection('itens').findOneAndUpdate({_id:oid(id),usuario_id:oid(owner),estado:'ativo'},{$set:{...patch,atualizado_em:new Date()}},{returnDocument:'after'})}
+  async createItemAndImages(item,images){const client=await connect(),session=client.startSession();try{await session.withTransaction(async()=>{const d=client.db('coleciona');const c=await d.collection('colecoes').findOne({_id:item.colecao_id,estado:'ativa'},{session});if(!c)throw Object.assign(new Error('Coleção indisponível.'),{status:409,code:'EM_EXCLUSAO'});await d.collection('itens').insertOne(item,{session});await d.collection('imagens').insertMany(images,{session})});return item}finally{await session.endSession()}}
+  async markItemDeleting(id,owner){return (await db()).collection('itens').findOneAndUpdate({_id:oid(id),usuario_id:oid(owner),estado:'ativo'},{$set:{estado:'em_exclusao',atualizado_em:new Date()}},{returnDocument:'after'})}
+  async markCollectionDeleting(id,owner){return (await db()).collection('colecoes').findOneAndUpdate({_id:oid(id),usuario_id:oid(owner),estado:'ativa'},{$set:{estado:'em_exclusao',atualizado_em:new Date()}},{returnDocument:'after'})}
+  async deletingItems(){return (await db()).collection('itens').find({estado:'em_exclusao'}).toArray()}
+  async deletingCollections(){return (await db()).collection('colecoes').find({estado:'em_exclusao'}).toArray()}
+  async itemsByCollection(id){return (await db()).collection('itens').find({colecao_id:oid(id)}).toArray()}
+  async finishItemDeletion(item){const client=await connect(),session=client.startSession();try{await session.withTransaction(async()=>{const d=client.db('coleciona'),filter={item_id:item._id};await Promise.all([d.collection('avaliacoes').deleteMany(filter,{session}),d.collection('comentarios').deleteMany(filter,{session}),d.collection('imagens').deleteMany(filter,{session})]);await d.collection('itens').deleteOne({_id:item._id,estado:'em_exclusao'},{session})})}finally{await session.endSession()}}
+  async finishCollectionDeletion(collection){const client=await connect(),session=client.startSession();try{await session.withTransaction(async()=>{const d=client.db('coleciona'),filter={colecao_id:collection._id};for(const name of ['avaliacoes','comentarios','imagens','itens'])await d.collection(name).deleteMany(filter,{session});await d.collection('colecoes').deleteOne({_id:collection._id,estado:'em_exclusao'},{session})})}finally{await session.endSession()}}
+  async ready(){const d=await db();await d.command({ping:1});const hello=await d.command({hello:1});return !!hello.isWritablePrimary}
+}
+module.exports=CatalogRepository;
