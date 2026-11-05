@@ -7,6 +7,8 @@ app.disable('x-powered-by');app.use(cors());app.use(express.json({limit:'70kb'})
 app.use('/api/v1/auth',require('./routes/authRoutes'));
 app.use('/api/v1/health',require('./routes/healthRoutes'));
 app.use('/api/v1/imagens',require('./routes/imageRoutes'));
+app.use('/api/v1',require('./routes/searchRoutes'));
+app.use('/api/v1',require('./routes/interactionRoutes'));
 app.use('/api/v1',require('./routes/catalogRoutes'));
 app.use(errorHandler);
 module.exports=app;

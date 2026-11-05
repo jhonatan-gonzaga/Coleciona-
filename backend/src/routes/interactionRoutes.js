@@ -1,0 +1,13 @@
+const router=require('express').Router();
+const service=require('../components/InteractionService');
+const {requireAuth}=require('../middleware/authenticate');
+const {asyncRoute}=require('../middleware/errorHandler');
+router.get('/itens/:id/avaliacoes/resumo',asyncRoute(async(req,res)=>res.json({data:await service.resumo(req.actorId,req.params.id)})));
+router.put('/itens/:id/avaliacao/minha',requireAuth,asyncRoute(async(req,res)=>res.json({data:await service.avaliar(req.actorId,req.params.id,req.body)})));
+router.delete('/itens/:id/avaliacao/minha',requireAuth,asyncRoute(async(req,res)=>{await service.removerAvaliacao(req.actorId,req.params.id);res.status(204).end()}));
+router.get('/itens/:id/comentarios',asyncRoute(async(req,res)=>res.json(await service.comentarios(req.actorId,req.params.id,req.query))));
+router.post('/itens/:id/comentarios',requireAuth,asyncRoute(async(req,res)=>res.status(201).json({data:await service.comentar(req.actorId,req.params.id,req.body)})));
+router.patch('/comentarios/:id',requireAuth,asyncRoute(async(req,res)=>res.json({data:await service.editarComentario(req.actorId,req.params.id,req.body)})));
+router.delete('/comentarios/:id',requireAuth,asyncRoute(async(req,res)=>{await service.removerComentario(req.actorId,req.params.id);res.status(204).end()}));
+router.get('/interacoes/minhas',requireAuth,asyncRoute(async(req,res)=>res.json(await service.minhas(req.actorId,req.query))));
+module.exports=router;
