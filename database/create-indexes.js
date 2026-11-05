@@ -1,0 +1,11 @@
+const d=db.getSiblingDB('coleciona');
+d.colecoes.createIndex({visibilidade:1,estado:1,_id:1});
+d.itens.createIndex({visibilidade:1,estado:1,'atributos.chave':1,'atributos.tipo':1,'atributos.valor':1});
+d.colecoes.createIndex({usuario_id:1,estado:1});
+d.itens.createIndex({usuario_id:1,estado:1,criado_em:-1});
+d.avaliacoes.createIndex({item_id:1,usuario_id:1},{unique:true});
+d.comentarios.createIndex({item_id:1,criado_em:-1});
+for(const name of ['itens','avaliacoes','comentarios','imagens']) d[name].createIndex({colecao_id:1});
+d.imagens.createIndex({item_id:1,estado:1,ordem:1});
+d.usuarios.createIndex({email:1},{unique:true});
+print('Índices I1–I12 criados');
