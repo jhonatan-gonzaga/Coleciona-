@@ -1,0 +1,2 @@
+import React,{useState}from'react';
+export default function RatingForm({onSave,busy}){const[nota,setNota]=useState(5);return <form className="inline-form" onSubmit={e=>{e.preventDefault();onSave(Number(nota))}}><label>Sua nota<select value={nota} onChange={e=>setNota(e.target.value)}>{[5,4,3,2,1].map(n=><option key={n} value={n}>{n} / 5</option>)}</select></label><button disabled={busy}>Avaliar</button></form>}
