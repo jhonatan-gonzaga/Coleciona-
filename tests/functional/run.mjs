@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
 const base=process.env.API_URL||'http://127.0.0.1:4000/api/v1';
 const png=await readFile(new URL('../fixtures/test.png',import.meta.url));
+const jpeg=await readFile(new URL('../fixtures/test.jpg',import.meta.url));
+const webp=await readFile(new URL('../fixtures/test.webp',import.meta.url));
+const tooWide=await readFile(new URL('../fixtures/too-wide.png',import.meta.url));
 let checks=0;
 async function call(path,{method='GET',token,body,files}={}){let payload=body,headers={};if(token)headers.Authorization=`Bearer ${token}`;if(files){payload=new FormData();if(body)payload.append('dados',JSON.stringify(body));for(const file of files)payload.append('imagens',new Blob([file],{type:'image/png'}),'test.png')}else if(body!==undefined){payload=JSON.stringify(body);headers['Content-Type']='application/json'}const response=await fetch(base+path,{method,headers,body:payload});let json=null;if(response.headers.get('content-type')?.includes('json'))json=await response.json();return {status:response.status,...json,headers:response.headers}}
 function expect(result,status,code){assert.equal(result.status,status,JSON.stringify(result));if(code)assert.equal(result.error?.code,code);checks++}
@@ -20,20 +25,37 @@ const hiddenItem=await make(publicCollection.data.id,itemData('Peça privada','p
 const hiddenCollectionItem=await make(privateCollection.data.id,itemData('Coleção privada','publica','outro_segredo'));
 const fullyPrivateItem=await make(privateCollection.data.id,itemData('Ambos privados','privada','segredo_duplo'));
 const fiveImages=await make(publicCollection.data.id,itemData('Cinco fotos','publica','ano'),[png,png,png,png,png]);
+const jpegItem=await make(publicCollection.data.id,itemData('JPEG','publica','formato_jpeg'),[jpeg]);assert.equal(jpegItem.imagens[0].tipo_mime,'image/jpeg');checks++;
+const webpItem=await make(publicCollection.data.id,itemData('WebP','publica','formato_webp'),[webp]);assert.equal(webpItem.imagens[0].tipo_mime,'image/webp');checks++;
 expect(await call(`/colecoes/${publicCollection.data.id}/itens`,{method:'POST',token:t1,body:itemData('Sem foto','publica','x'),files:[]}),422,'IMAGEM_OBRIGATORIA');
+expect(await call(`/colecoes/${publicCollection.data.id}/itens`,{method:'POST',token:t1,body:itemData('Seis fotos','publica','x'),files:[png,png,png,png,png,png]}),409,'LIMITE_IMAGENS');
+expect(await call(`/colecoes/${publicCollection.data.id}/itens`,{method:'POST',token:t1,body:itemData('Muito larga','publica','x'),files:[tooWide]}),422,'IMAGEM_INVALIDA');
+expect(await call(`/colecoes/${publicCollection.data.id}/itens`,{method:'POST',token:t1,body:itemData('Corrompida','publica','x'),files:[Buffer.from('not an image')]}),422,'IMAGEM_INVALIDA');
+expect(await call(`/colecoes/${publicCollection.data.id}/itens`,{method:'POST',token:t1,body:itemData('Muito grande','publica','x'),files:[Buffer.alloc(5*1024*1024+1)]}),422,'IMAGEM_INVALIDA');
 expect(await call(`/itens/${fiveImages.id}/imagens`,{method:'POST',token:t1,files:[png]}),409,'LIMITE_IMAGENS');
 expect(await call(`/imagens/${publicItem.imagens[0].id}`,{method:'DELETE',token:t1}),409,'ULTIMA_IMAGEM');
 for(const item of [hiddenItem,hiddenCollectionItem,fullyPrivateItem]){expect(await call(`/itens/${item.id}`,{token:t2}),404);expect(await call(`/imagens/${item.imagens[0].id}/arquivo`,{token:t2}),404);expect(await call(`/itens/${item.id}/avaliacoes/resumo`,{token:t2}),404)}
+expect(await call(`/itens/${hiddenItem.id}/avaliacao/minha`,{method:'PUT',token:t2,body:{nota:5}}),404);
+expect(await call(`/itens/${hiddenItem.id}/comentarios`,{method:'POST',token:t2,body:{texto:'Tentativa privada'}}),404);
 const search=await call('/itens/busca',{method:'POST',body:{escopo:'global',filtros:[{chave:'vram_gb',tipo:'numero',operador:'eq',valor:seed}]}});expect(search,200);assert.deepEqual(search.data.map(x=>x.id),[publicItem.id]);
 const suggestions=await call('/itens/filtros?escopo=global');expect(suggestions,200);assert(!suggestions.data.some(x=>x.chave.includes('segredo')));checks++;
 const mine=await call('/itens/busca',{method:'POST',token:t1,body:{escopo:'minhas',filtros:[{chave:'segredo',tipo:'numero',operador:'eq',valor:8}]}});expect(mine,200);assert.deepEqual(mine.data.map(x=>x.id),[hiddenItem.id]);
 expect(await call(`/itens/${publicItem.id}`,{token:t2}),200);
 expect(await call(`/itens/${publicItem.id}`,{method:'PATCH',token:t2,body:{nome:'Ataque',usuario_id:login2.data.usuario.id}}),403);
+expect(await call(`/itens/${publicItem.id}`,{method:'DELETE',token:t2}),403);
+expect(await call(`/colecoes/${publicCollection.data.id}`,{method:'PATCH',token:t2,body:{nome:'Ataque'}}),403);
+expect(await call(`/colecoes/${publicCollection.data.id}`,{method:'DELETE',token:t2}),403);
+expect(await call(`/imagens/${publicItem.imagens[0].id}`,{method:'DELETE',token:t2}),403);
 expect(await call(`/itens/${publicItem.id}`,{method:'PATCH',token:t1,body:{atributos:[{chave:'novo_campo',rotulo:'Novo campo',tipo:'texto',valor:'Flexível'}]}}),200);
+const afterAttribute=await call('/itens/busca',{method:'POST',body:{escopo:'global',filtros:[{chave:'vram_gb',tipo:'numero',operador:'eq',valor:seed}]}});expect(afterAttribute,200);assert.equal(afterAttribute.meta.total,0);checks++;
 assert.equal((await call(`/itens/${hiddenItem.id}`,{token:t1})).data.atributos[0].chave,'segredo');checks++;
 expect(await call('/itens/busca',{method:'POST',body:{escopo:'global',filtros:[{chave:'$where',tipo:'texto',operador:'eq',valor:'x'}]}}),400,'FILTROS_INVALIDOS');
 expect(await call('/itens/busca',{method:'POST',body:{escopo:'global',filtros:[{chave:'x',tipo:'texto',operador:'regex',valor:'x'}]}}),400,'FILTROS_INVALIDOS');
 expect(await call('/explorar/colecoes?tamanho=51'),400,'PAGINACAO_INVALIDA');
+expect(await call(`/itens/${publicItem.id}`,{method:'PATCH',token:t1,body:{atributos:Array.from({length:51},(_,i)=>({rotulo:`Campo ${i}`,tipo:'texto',valor:'x'}))}}),422,'ATRIBUTOS_INVALIDOS');
+expect(await call(`/itens/${publicItem.id}`,{method:'PATCH',token:t1,body:{atributos:[{rotulo:'x'.repeat(51),tipo:'texto',valor:'x'}]}}),422,'DADOS_INVALIDOS');
+expect(await call(`/itens/${publicItem.id}`,{method:'PATCH',token:t1,body:{descricao:'x'.repeat(501)}}),422,'DADOS_INVALIDOS');
+expect(await call(`/itens/${publicItem.id}`,{method:'PATCH',token:t1,body:{atributos:Array.from({length:50},(_,i)=>({chave:`campo_${i}`,rotulo:'語'.repeat(50),tipo:'texto',valor:'語'.repeat(500)}))}}),422,'ITEM_GRANDE');
 expect(await call(`/itens/${publicItem.id}/comentarios`,{method:'POST',token:t2,body:{texto:'x'.repeat(1001)}}),422,'COMENTARIO_INVALIDO');
 expect(await call(`/itens/${publicItem.id}/avaliacao/minha`,{method:'PUT',token:t1,body:{nota:5}}),403,'INTERACAO_PROIBIDA');
 expect(await call(`/itens/${publicItem.id}/avaliacao/minha`,{method:'PUT',token:t2,body:{nota:4}}),200);
@@ -42,9 +64,13 @@ const comment=await call(`/itens/${publicItem.id}/comentarios`,{method:'POST',to
 expect(await call(`/comentarios/${comment.data.id}`,{method:'PATCH',token:t1,body:{texto:'Tentativa'}}),403);
 expect(await call(`/itens/${publicItem.id}/comentarios`,{method:'POST',token:t1,body:{texto:'Resposta do dono'}}),201);
 const gallery=await call(`/itens/${publicItem.id}/imagens`,{method:'POST',token:t1,files:[png,png]});expect(gallery,201);assert.equal(gallery.data.length,3);
+const replacement=new FormData();replacement.append('imagem',new Blob([webp],{type:'image/png'}),'nome-falso.png');const replacedResponse=await fetch(`${base}/imagens/${gallery.data[1].id}`,{method:'PUT',headers:{Authorization:`Bearer ${t1}`},body:replacement});const replaced={status:replacedResponse.status,...await replacedResponse.json()};expect(replaced,200);assert.equal(replaced.data.tipo_mime,'image/webp');assert(!('caminho'in replaced.data));checks++;
+expect(await call(`/imagens/${gallery.data[1].id}`,{method:'PUT',token:t2,body:{}}),403);
 expect(await call(`/itens/${publicItem.id}/imagens/ordem`,{method:'PATCH',token:t1,body:{ids:gallery.data.map(x=>x.id).reverse()}}),200);
 expect(await call(`/imagens/${gallery.data[0].id}`,{method:'DELETE',token:t1}),200);
+const ordered=(await call(`/itens/${publicItem.id}`,{token:t1})).data.imagens;assert.deepEqual(ordered.map(x=>x.ordem),[0,1]);checks++;
 const img=await call(`/imagens/${gallery.data[1].id}/arquivo`,{token:t1});expect(img,200);assert.equal(img.headers.get('cache-control'),'private, no-store');
+expect(await call('/storage/uploads/arquivo.png'),404);
 expect(await call(`/colecoes/${publicCollection.data.id}`,{method:'PATCH',token:t1,body:{visibilidade:'privada'}}),200);
 expect(await call(`/itens/${publicItem.id}`,{token:t2}),404);
 const afterPrivate=await call('/itens/busca',{method:'POST',body:{escopo:'global',filtros:[]}});expect(afterPrivate,200);assert(!afterPrivate.data.some(x=>x.colecao_id===publicCollection.data.id));
@@ -54,6 +80,10 @@ expect(await call(`/itens/${publicItem.id}/avaliacao/minha`,{method:'DELETE',tok
 expect(await call(`/colecoes/${publicCollection.data.id}`,{method:'DELETE',token:t1}),204);
 expect(await call(`/itens/${publicItem.id}`,{token:t1}),404);
 assert(!(await call('/interacoes/minhas',{token:t2})).data.some(x=>x.item_id===publicItem.id));checks++;
+const raceItem=await make(privateCollection.data.id,itemData('Corrida de exclusão','privada','corrida'));
+const [raceAdd,raceDelete]=await Promise.all([call(`/itens/${raceItem.id}/imagens`,{method:'POST',token:t1,files:[png]}),call(`/itens/${raceItem.id}`,{method:'DELETE',token:t1})]);expect(raceDelete,204);assert([201,404,409].includes(raceAdd.status));checks++;
+expect(await call(`/itens/${raceItem.id}`,{token:t1}),404);
+const mongo=promisify(execFile);const {stdout}=await mongo('mongosh',['--quiet','mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/coleciona?replicaSet=rsColeciona','--eval',`print(db.getSiblingDB('coleciona').imagens.countDocuments({item_id:ObjectId('${raceItem.id}')}))`]);assert.equal(stdout.trim(),'0');checks++;
 for(let i=0;i<5;i++)expect(await call('/auth/login',{method:'POST',body:{email:user2.email,senha:'senha-errada'}}),401,'CREDENCIAIS_INVALIDAS');
 expect(await call('/auth/login',{method:'POST',body:user2}),429,'LOGIN_BLOQUEADO');
 console.log(JSON.stringify({status:'atendido',checks,publicItem:publicItem.id}));
