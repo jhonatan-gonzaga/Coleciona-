@@ -1,6 +1,7 @@
 import {request,qs} from './http';
 export const catalogApi={
   minhas:(pagina=1)=>request(`/colecoes/minhas?${qs({pagina})}`),
+  sugerirEtiquetas:q=>request(`/etiquetas/minhas?${qs({q})}`),
   criar:body=>request('/colecoes',{method:'POST',body}),
   editar:(id,body)=>request(`/colecoes/${id}`,{method:'PATCH',body}),
   excluir:id=>request(`/colecoes/${id}`,{method:'DELETE'}),

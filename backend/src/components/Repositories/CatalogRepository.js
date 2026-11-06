@@ -7,6 +7,18 @@ class CatalogRepository {
   async myCollections(userId,skip,limit){const filter={usuario_id:oid(userId),estado:'ativa'},d=await db();return {rows:await d.collection('colecoes').find(filter).sort({criado_em:-1}).skip(skip).limit(limit).toArray(),total:await d.collection('colecoes').countDocuments(filter)}}
   async itemsInCollection(collectionId,skip,limit){const filter={colecao_id:oid(collectionId),estado:'ativo'},d=await db();return {rows:await d.collection('itens').find(filter).sort({criado_em:-1}).skip(skip).limit(limit).toArray(),total:await d.collection('itens').countDocuments(filter)}}
   async countItems(collectionId){return (await db()).collection('itens').countDocuments({colecao_id:oid(collectionId),estado:'ativo'})}
+  async suggestTags(userId,prefix){
+    const escaped=prefix.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    return (await db()).collection('itens').aggregate([
+      {$match:{usuario_id:oid(userId),estado:'ativo',etiquetas:{$regex:`^${escaped}`,$options:'i'}}},
+      {$unwind:'$etiquetas'},
+      {$match:{etiquetas:{$regex:`^${escaped}`,$options:'i'}}},
+      {$group:{_id:{$toLower:'$etiquetas'},nome:{$first:'$etiquetas'}}},
+      {$sort:{nome:1}},
+      {$limit:8},
+      {$project:{_id:0,nome:1}}
+    ]).toArray()
+  }
   async insertCollection(doc){const result=await (await db()).collection('colecoes').insertOne(doc);return {...doc,_id:result.insertedId}}
   async updateCollection(id,owner,patch){return (await db()).collection('colecoes').findOneAndUpdate({_id:oid(id),usuario_id:oid(owner),estado:'ativa'},{$set:{...patch,atualizado_em:new Date()}},{returnDocument:'after'})}
   async updateItem(id,owner,patch){return withActiveItem(oid(id),async(d,session)=>d.collection('itens').findOneAndUpdate({_id:oid(id),usuario_id:oid(owner),estado:'ativo'},{$set:{...patch,atualizado_em:new Date()}},{session,returnDocument:'after'}))}

@@ -9,6 +9,13 @@ const repo=new CatalogRepository(),access=new AccessControlService();
 async function ownedCollection(actor,id){const c=await repo.collection(id);if(!c)fail(404,'NAO_ENCONTRADO','Coleção não encontrada.');if(!await access.canEdit(actor,c))fail(c.usuario_id.toString()===actor?409:403,c.estado==='em_exclusao'?'EM_EXCLUSAO':'SEM_PERMISSAO','Coleção indisponível.');return c}
 async function ownedItem(actor,id){const item=await repo.item(id);if(!item)fail(404,'NAO_ENCONTRADO','Item não encontrado.');if(!await access.canEdit(actor,item))fail(item.usuario_id.toString()===actor?409:403,item.estado==='em_exclusao'?'EM_EXCLUSAO':'SEM_PERMISSAO','Item indisponível.');await ownedCollection(actor,item.colecao_id);return item}
 async function myCollections(actor,query){const pg=page(query),result=await repo.myCollections(actor,pg.skip,pg.tamanho);const rows=await Promise.all(result.rows.map(async c=>({...serialize(c),quantidade_itens:await repo.countItems(c._id)})));return {data:rows,meta:{pagina:pg.pagina,tamanho:pg.tamanho,total:result.total}}}
+async function suggestTags(actor,query){
+  const prefix=query.q===undefined?'':query.q;
+  if(typeof prefix!=='string'||prefix.trim().length>50)fail(400,'CONSULTA_INVALIDA','A busca deve ter até 50 caracteres.');
+  if(!prefix.trim())return {data:[]};
+  const rows=await repo.suggestTags(actor,prefix.trim());
+  return {data:rows.map(row=>row.nome)}
+}
 async function createCollection(actor,body){const now=new Date(),doc={usuario_id:new ObjectId(actor),...collectionFields(body),estado:'ativa',criado_em:now,atualizado_em:now};const created=await repo.insertCollection(doc);SearchRepository.invalidate();return serialize(created)}
 async function updateCollection(actor,id,body){await ownedCollection(actor,id);const updated=await repo.updateCollection(id,actor,collectionFields(body,true));if(!updated)fail(409,'EM_EXCLUSAO','Coleção indisponível.');SearchRepository.invalidate();return serialize(updated)}
 async function collectionItems(actor,id,query){await ownedCollection(actor,id);const pg=page(query),result=await repo.itemsInCollection(id,pg.skip,pg.tamanho);return {data:await Promise.all(result.rows.map(presentItem)),meta:{pagina:pg.pagina,tamanho:pg.tamanho,total:result.total}}}
@@ -27,4 +34,4 @@ async function deleteItem(actor,id){const item=await ownedItem(actor,id);const m
 async function finishCollection(collection){await images.cleanupImages(await images.repo.byCollection(collection._id));await repo.finishCollectionDeletion(collection)}
 async function deleteCollection(actor,id){await ownedCollection(actor,id);const marked=await repo.markCollectionDeleting(id,actor);if(!marked)fail(409,'EM_EXCLUSAO','Coleção em exclusão.');SearchRepository.invalidate();await finishCollection(marked)}
 async function resumeDeletions(){for(const c of await repo.deletingCollections()){try{await finishCollection(c)}catch(error){console.error('Falha na cascata da coleção',error)}}for(const item of await repo.deletingItems()){try{await finishItem(item)}catch(error){console.error('Falha na cascata do item',error)}}await images.resume()}
-module.exports={myCollections,createCollection,updateCollection,deleteCollection,collectionItems,createItem,getItem,updateItem,deleteItem,addImages,replaceImage,reorderImages,removeImage,getImage,resumeDeletions,repo,access};
+module.exports={myCollections,suggestTags,createCollection,updateCollection,deleteCollection,collectionItems,createItem,getItem,updateItem,deleteItem,addImages,replaceImage,reorderImages,removeImage,getImage,resumeDeletions,repo,access};

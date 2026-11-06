@@ -6,6 +6,7 @@ const {asyncRoute,fail}=require('../middleware/errorHandler');
 const upload=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024,files:6,fields:5}});
 const parseDados=req=>{try{return JSON.parse(req.body.dados)}catch{fail(400,'JSON_INVALIDO','Parte dados deve conter JSON válido.')}};
 router.get('/colecoes/minhas',requireAuth,asyncRoute(async(req,res)=>res.json(await catalog.myCollections(req.actorId,req.query))));
+router.get('/etiquetas/minhas',requireAuth,asyncRoute(async(req,res)=>res.json(await catalog.suggestTags(req.actorId,req.query))));
 router.post('/colecoes',requireAuth,asyncRoute(async(req,res)=>res.status(201).json({data:await catalog.createCollection(req.actorId,req.body)})));
 router.patch('/colecoes/:id',requireAuth,asyncRoute(async(req,res)=>res.json({data:await catalog.updateCollection(req.actorId,req.params.id,req.body)})));
 router.delete('/colecoes/:id',requireAuth,asyncRoute(async(req,res)=>{await catalog.deleteCollection(req.actorId,req.params.id);res.status(204).end()}));

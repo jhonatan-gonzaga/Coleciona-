@@ -8,6 +8,7 @@ export const responses={
   'POST /auth/login':{data:{token:'jwt-de-exemplo',usuario:{id:'usuario_01',nome:'Ana',email:'ana@example.test'}}},
   'GET /auth/me':{data:{id:'usuario_01',nome:'Ana',email:'ana@example.test'}},
   'GET /colecoes/minhas':paged([collection]),
+  'GET /etiquetas/minhas':{data:['Brasil','C++']},
   'POST /colecoes':{data:collection},'PATCH /colecoes/:id':{data:collection},'DELETE /colecoes/:id':null,
   'GET /colecoes/:id/itens':paged([item]),'POST /colecoes/:id/itens':{data:item},
   'GET /itens/:id':{data:item},'PATCH /itens/:id':{data:item},'DELETE /itens/:id':null,
