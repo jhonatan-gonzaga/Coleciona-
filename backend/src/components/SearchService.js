@@ -8,9 +8,45 @@ const repo=new SearchRepository(),access=new AccessControlService();
 function scope(value,actor){if(!['global','minhas'].includes(value))fail(400,'ESCOPO_INVALIDO','Escopo deve ser global ou minhas.');if(value==='minhas'&&!actor)fail(401,'NAO_AUTENTICADO','Autenticação necessária.');return value}
 function searchTerm(value){if(value===undefined)return '';if(typeof value!=='string'||value.trim().length>100)fail(400,'BUSCA_INVALIDA','A busca deve ter até 100 caracteres.');return value.trim()}
 function namePattern(value){return value.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+function attributeValueMatch(pattern){return {$expr:{$anyElementTrue:{$map:{input:{$ifNull:['$atributos',[]]},as:'attribute',in:{$regexMatch:{input:{$convert:{input:'$$attribute.valor',to:'string',onError:'',onNull:''}},regex:pattern,options:'i'}}}}}}}
+function textConditions(term,collectionIds){
+  const pattern=namePattern(term),conditions=[
+    {nome:{$regex:pattern,$options:'i'}},
+    {colecao_id:{$in:collectionIds}},
+    {'atributos.rotulo':{$regex:pattern,$options:'i'}},
+    {'atributos.chave':{$regex:pattern,$options:'i'}},
+    attributeValueMatch(pattern)
+  ];
+  const booleanTerm=term.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  if(booleanTerm==='sim'||booleanTerm==='nao')conditions.push({'atributos.valor':booleanTerm==='sim'});
+  return {$or:conditions}
+}
 async function baseFilter(escopo,actor){if(escopo==='minhas')return {usuario_id:oid(actor),estado:'ativo'};return {estado:'ativo',visibilidade:'publica',colecao_id:{$in:await repo.publicCollectionIds()}}}
 function validatedFilters(filters){if(!Array.isArray(filters)||filters.length>3)fail(400,'FILTROS_INVALIDOS','Envie até três filtros.');return filters.map(f=>{if(!f||typeof f!=='object'||Array.isArray(f)||typeof f.chave!=='string'||! /^[a-z0-9_]{1,50}$/.test(f.chave)||!['texto','numero','data','booleano','opcao'].includes(f.tipo))fail(400,'FILTROS_INVALIDOS','Chave ou tipo inválido.');const allowed=f.tipo==='numero'||f.tipo==='data'?['eq','in','gte','lte']:['eq','in'];if(!allowed.includes(f.operador))fail(400,'FILTROS_INVALIDOS','Operador inválido.');let values=f.operador==='in'?f.valor:[f.valor];if(!Array.isArray(values)||!values.length||values.length>50)fail(400,'FILTROS_INVALIDOS','Valor inválido.');values=values.map(v=>{if(f.tipo==='numero'){if(typeof v!=='number'||!Number.isFinite(v))fail(400,'FILTROS_INVALIDOS','Número inválido.');return v}if(f.tipo==='booleano'){if(typeof v!=='boolean')fail(400,'FILTROS_INVALIDOS','Booleano inválido.');return v}if(f.tipo==='data'){if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v)||Number.isNaN(Date.parse(v)))fail(400,'FILTROS_INVALIDOS','Data inválida.');return new Date(`${v}T00:00:00.000Z`)}if(typeof v!=='string'||v.length>500)fail(400,'FILTROS_INVALIDOS','Texto inválido.');return v});return {atributos:{$elemMatch:{chave:f.chave,tipo:f.tipo,valor:f.operador==='in'?{$in:values}:f.operador==='eq'?values[0]:{[`$${f.operador}`]:values[0]}}}}})}
 async function explorar(query){const pg=page(query),term=searchTerm(query.q),result=await repo.publicCollections(pg.skip,pg.tamanho,term?namePattern(term):'');const rows=[];for(const c of result.rows){const current=await new (require('./Repositories/CatalogRepository'))().collection(c._id);if(current?.estado==='ativa'&&current.visibilidade==='publica')rows.push({...serialize(c),quantidade_itens:await repo.countPublicItems(c._id)})}return {data:rows,meta:{pagina:pg.pagina,tamanho:pg.tamanho,total:result.total}}}
 async function filtros(escopo,actor){scope(escopo,actor);const rows=await repo.discover(await baseFilter(escopo,actor));return {data:rows.map(row=>({chave:row._id.chave,tipo:row._id.tipo,...(['texto','opcao','booleano'].includes(row._id.tipo)?{valores:row.valores.slice(0,100)}:{})}))}}
-async function busca(body,actor){const escopo=scope(body?.escopo,actor),pg=page(body||{}),filter=await baseFilter(escopo,actor),conditions=validatedFilters(body.filtros||[]),term=searchTerm(body.texto);if(body.colecao_id!==undefined){const id=typeof body.colecao_id==='string'?oid(body.colecao_id):null;if(escopo!=='minhas'||!id)fail(400,'BUSCA_INVALIDA','Coleção inválida para esta busca.');filter.colecao_id=id}if(term){const pattern=namePattern(term),collectionIds=await repo.collectionIdsByName(escopo,actor,pattern);conditions.push({$or:[{nome:{$regex:pattern,$options:'i'}},{colecao_id:{$in:collectionIds}}]})}if(conditions.length)filter.$and=conditions;const result=await repo.search(filter,pg.skip,pg.tamanho);const visible=await access.viewableItemIds(actor,result.rows,escopo);const allowed=result.rows.filter(item=>visible.has(String(item._id)));const [galleries,collections]=await Promise.all([images.byItems(allowed.map(item=>item._id)),repo.collectionNames([...new Map(allowed.map(item=>[String(item.colecao_id),item.colecao_id])).values()])]);const names=new Map(collections.map(c=>[String(c._id),c.nome]));const rows=allowed.map(item=>({...serialize(item),colecao_nome:names.get(String(item.colecao_id)),imagens:galleries.get(String(item._id))||[]}));return {data:rows,meta:{pagina:pg.pagina,tamanho:pg.tamanho,total:result.total}}}
+async function busca(body,actor){
+  const escopo=scope(body?.escopo,actor),pg=page(body||{}),filter=await baseFilter(escopo,actor);
+  const conditions=validatedFilters(body.filtros||[]),term=searchTerm(body.texto);
+  if(body.colecao_id!==undefined){
+    const id=typeof body.colecao_id==='string'?oid(body.colecao_id):null;
+    if(escopo!=='minhas'||!id)fail(400,'BUSCA_INVALIDA','Coleção inválida para esta busca.');
+    filter.colecao_id=id;
+  }
+  if(term){
+    const collectionIds=await repo.collectionIdsByName(escopo,actor,namePattern(term));
+    conditions.push(textConditions(term,collectionIds));
+  }
+  if(conditions.length)filter.$and=conditions;
+  const result=await repo.search(filter,pg.skip,pg.tamanho);
+  const visible=await access.viewableItemIds(actor,result.rows,escopo);
+  const allowed=result.rows.filter(item=>visible.has(String(item._id)));
+  const [galleries,collections]=await Promise.all([
+    images.byItems(allowed.map(item=>item._id)),
+    repo.collectionNames([...new Map(allowed.map(item=>[String(item.colecao_id),item.colecao_id])).values()])
+  ]);
+  const names=new Map(collections.map(collection=>[String(collection._id),collection.nome]));
+  const rows=allowed.map(item=>({...serialize(item),colecao_nome:names.get(String(item.colecao_id)),imagens:galleries.get(String(item._id))||[]}));
+  return {data:rows,meta:{pagina:pg.pagina,tamanho:pg.tamanho,total:result.total}}
+}
 module.exports={explorar,filtros,busca,validatedFilters};
