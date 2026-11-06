@@ -10,7 +10,7 @@ try {
   ]});
 }
 for (let i=0;i<60;i++) {
-  if (db.hello().isWritablePrimary) { print('Primário pronto'); quit(0); }
+  try {if (rs.status().members.some(member=>member.stateStr==='PRIMARY')) { print('Primário pronto'); quit(0); }} catch (error) {if (error.codeName!=='NotYetInitialized') throw error;}
   sleep(1000);
 }
 throw new Error('Eleição do primário excedeu 60 s');

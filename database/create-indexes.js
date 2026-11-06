@@ -8,4 +8,5 @@ d.comentarios.createIndex({item_id:1,criado_em:-1});
 for(const name of ['itens','avaliacoes','comentarios','imagens']) d[name].createIndex({colecao_id:1});
 d.imagens.createIndex({item_id:1,estado:1,ordem:1});
 d.usuarios.createIndex({email:1},{unique:true});
-print('Índices I1–I12 criados');
+d.itens.createIndex({visibilidade:1,estado:1,criado_em:-1,colecao_id:1});
+print('Índices I1–I13 criados');

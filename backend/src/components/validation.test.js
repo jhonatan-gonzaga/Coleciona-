@@ -1,0 +1,3 @@
+const test=require('node:test');const assert=require('node:assert/strict');const {itemFields,page}=require('./validation');
+test('atributos são tipados e chaves não duplicam',()=>{const item=itemFields({nome:'Selo',atributos:[{rotulo:'País',tipo:'texto',valor:'Brasil'}]});assert.equal(item.atributos[0].chave,'pais');assert.throws(()=>itemFields({nome:'Selo',atributos:[{rotulo:'País',tipo:'texto',valor:'Brasil'},{rotulo:'Pais',tipo:'texto',valor:'Chile'}]}),{code:'ATRIBUTOS_INVALIDOS'})});
+test('limites de paginação e documento',()=>{assert.throws(()=>page({tamanho:51}),{code:'PAGINACAO_INVALIDA'});assert.throws(()=>itemFields({nome:'Selo',descricao:'x'.repeat(501)}),{code:'DADOS_INVALIDOS'})});

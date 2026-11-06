@@ -1,0 +1,3 @@
+const test=require('node:test');const assert=require('node:assert/strict');const {validatedFilters}=require('./SearchService');
+test('filtro usa elemMatch no mesmo atributo',()=>{const filters=validatedFilters([{chave:'vram_gb',tipo:'numero',operador:'gte',valor:8}]);assert.deepEqual(filters,[{atributos:{$elemMatch:{chave:'vram_gb',tipo:'numero',valor:{$gte:8}}}}])});
+test('operadores e chaves não autorizados são recusados',()=>{for(const bad of [{chave:'$where',tipo:'texto',operador:'eq',valor:'x'},{chave:'x.y',tipo:'texto',operador:'eq',valor:'x'},{chave:'x',tipo:'texto',operador:'regex',valor:'x'}])assert.throws(()=>validatedFilters([bad]),{code:'FILTROS_INVALIDOS'})});

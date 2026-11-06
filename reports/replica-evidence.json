@@ -1,0 +1,4 @@
+[
+  {"inicio":"2026-11-05T23:51:10.297Z","fim":"2026-11-05T23:51:46.418Z","primario_inicial":27017,"novo_primario":27018,"eleicao_ms":16305,"escrita_retomada_ms":16542,"marcador_majority_preservado":true,"item_privado_protegido":true,"escrita_com_secundario_parado":true,"tres_membros_saudaveis":true},
+  {"inicio":"2026-11-06T00:19:38.278Z","fim":"2026-11-06T00:20:14.204Z","primario_inicial":27019,"novo_primario":27017,"eleicao_ms":16287,"escrita_retomada_ms":16521,"marcador_majority_preservado":true,"item_privado_protegido":true,"escrita_com_secundario_parado":true,"tres_membros_saudaveis":true}
+]
