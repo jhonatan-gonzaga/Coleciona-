@@ -7,5 +7,5 @@ mkdir -p "$dest"
 mongodump --uri='mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/coleciona?replicaSet=rsColeciona' --db=coleciona --out="$dest/mongo"
 mkdir -p "$root/storage/uploads"
 tar -C "$root/storage" -cf "$dest/uploads.tar" uploads
-sha256sum "$dest/uploads.tar" > "$dest/uploads.sha256"
+(cd "$dest" && sha256sum uploads.tar > uploads.sha256)
 echo "$dest"
