@@ -1,6 +1,6 @@
 # Testes externos
 
-Com API e replica set ativos: `node tests/functional/run.mjs` na raiz do projeto. O script cria dois usuários descartáveis e verifica autenticação, visibilidade nas duas camadas, filtros, avaliações, comentários, galeria e cascata. A fixture é um PNG real de 2 × 2 px.
+Com API e replica set ativos: `node tests/functional/run.mjs` na raiz do projeto. O script cria dois usuários descartáveis e verifica autenticação, visibilidade nas duas camadas, filtros, avaliações, comentários, galeria e cascata. As fixtures válidas mostram um carrinho em PNG, JPEG e WebP; a imagem panorâmica de 6001 px testa rejeição por dimensão.
 
 `CLIENTS=100 SECONDS=30 node tests/rnf/load.mjs` mede p95, taxa de erro e recursos da máquina. Para misturar detalhes e escrita, informe `ITEM_ID` de um item público próprio e `TOKEN`. Para a meta de 100 req/s, defina também `RPS=100`. Não confunda esse ensaio curto com a meta de 1 milhão de itens.
 
