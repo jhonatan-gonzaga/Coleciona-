@@ -17,10 +17,11 @@ for(const user of [user1,user2])expect(await call('/auth/cadastro',{method:'POST
 const login1=await call('/auth/login',{method:'POST',body:user1}),login2=await call('/auth/login',{method:'POST',body:user2});expect(login1,200);expect(login2,200);
 const t1=login1.data.token,t2=login2.data.token;
 expect(await call('/auth/me',{token:t1}),200);
-const publicCollection=await call('/colecoes',{method:'POST',token:t1,body:{nome:'Acervo aberto',visibilidade:'publica'}}),privateCollection=await call('/colecoes',{method:'POST',token:t1,body:{nome:'Acervo fechado'}});expect(publicCollection,201);expect(privateCollection,201);
+const publicCollectionName=`Acervo aberto ${seed}`,privateCollectionName=`Acervo fechado ${seed}`,publicItemName=`Peça pública ${seed}`;
+const publicCollection=await call('/colecoes',{method:'POST',token:t1,body:{nome:publicCollectionName,visibilidade:'publica'}}),privateCollection=await call('/colecoes',{method:'POST',token:t1,body:{nome:privateCollectionName}});expect(publicCollection,201);expect(privateCollection,201);
 const itemData=(name,visibility,key)=>({nome:name,visibilidade:visibility,atributos:[{chave:key,rotulo:key,tipo:'numero',valor:key==='vram_gb'?seed:8}]});
 async function make(collection,body,files=[png]){const r=await call(`/colecoes/${collection}/itens`,{method:'POST',token:t1,body,files});expect(r,201);return r.data}
-const publicItem=await make(publicCollection.data.id,itemData('Peça pública','publica','vram_gb'));
+const publicItem=await make(publicCollection.data.id,itemData(publicItemName,'publica','vram_gb'));
 const hiddenItem=await make(publicCollection.data.id,{...itemData('Peça privada','privada','segredo'),etiquetas:['Brasil','Brahma']});
 const hiddenCollectionItem=await make(privateCollection.data.id,{...itemData('Coleção privada','publica','outro_segredo'),etiquetas:['Brasil','C++']});
 const fullyPrivateItem=await make(privateCollection.data.id,itemData('Ambos privados','privada','segredo_duplo'));
@@ -43,6 +44,18 @@ for(const item of [hiddenItem,hiddenCollectionItem,fullyPrivateItem]){expect(awa
 expect(await call(`/itens/${hiddenItem.id}/avaliacao/minha`,{method:'PUT',token:t2,body:{nota:5}}),404);
 expect(await call(`/itens/${hiddenItem.id}/comentarios`,{method:'POST',token:t2,body:{texto:'Tentativa privada'}}),404);
 const search=await call('/itens/busca',{method:'POST',body:{escopo:'global',filtros:[{chave:'vram_gb',tipo:'numero',operador:'eq',valor:seed}]}});expect(search,200);assert.deepEqual(search.data.map(x=>x.id),[publicItem.id]);
+const byItemName=await call('/itens/busca',{method:'POST',body:{escopo:'global',texto:publicItemName.toUpperCase(),filtros:[]}});expect(byItemName,200);assert.deepEqual(byItemName.data.map(x=>x.id),[publicItem.id]);assert.equal(byItemName.data[0].colecao_nome,publicCollectionName);checks++;
+const byCollectionName=await call('/itens/busca',{method:'POST',body:{escopo:'global',texto:publicCollectionName.toLowerCase(),filtros:[]}});expect(byCollectionName,200);assert(byCollectionName.data.some(x=>x.id===publicItem.id));assert(!byCollectionName.data.some(x=>x.id===hiddenItem.id));checks++;
+const privateName=await call('/itens/busca',{method:'POST',body:{escopo:'global',texto:privateCollectionName,filtros:[]}});expect(privateName,200);assert.equal(privateName.meta.total,0);checks++;
+const ownPrivateName=await call('/itens/busca',{method:'POST',token:t1,body:{escopo:'minhas',texto:privateCollectionName,filtros:[]}});expect(ownPrivateName,200);assert.deepEqual(new Set(ownPrivateName.data.map(x=>x.id)),new Set([hiddenCollectionItem.id,fullyPrivateItem.id]));checks++;
+const secondPage=await call('/itens/busca',{method:'POST',token:t1,body:{escopo:'minhas',texto:privateCollectionName,pagina:2,tamanho:1,filtros:[]}});expect(secondPage,200);assert.equal(secondPage.meta.total,2);assert.equal(secondPage.data.length,1);checks++;
+const ownScopedName=await call('/itens/busca',{method:'POST',token:t1,body:{escopo:'minhas',colecao_id:publicCollection.data.id,texto:'Peça',filtros:[]}});expect(ownScopedName,200);assert.deepEqual(new Set(ownScopedName.data.map(x=>x.id)),new Set([publicItem.id,hiddenItem.id]));checks++;
+const nameAndAttribute=await call('/itens/busca',{method:'POST',body:{escopo:'global',texto:publicCollectionName,filtros:[{chave:'vram_gb',tipo:'numero',operador:'eq',valor:seed}]}});expect(nameAndAttribute,200);assert.deepEqual(nameAndAttribute.data.map(x=>x.id),[publicItem.id]);checks++;
+const publicCollectionsByName=await call(`/explorar/colecoes?q=${encodeURIComponent(publicCollectionName.toUpperCase())}`);expect(publicCollectionsByName,200);assert.deepEqual(publicCollectionsByName.data.map(x=>x.id),[publicCollection.data.id]);checks++;
+const ownCollectionsByName=await call(`/colecoes/minhas?q=${encodeURIComponent(privateCollectionName)}`,{token:t1});expect(ownCollectionsByName,200);assert.deepEqual(ownCollectionsByName.data.map(x=>x.id),[privateCollection.data.id]);checks++;
+const literalSearch=await call('/itens/busca',{method:'POST',body:{escopo:'global',texto:'Acervo.*',filtros:[]}});expect(literalSearch,200);assert.equal(literalSearch.meta.total,0);checks++;
+expect(await call('/itens/busca',{method:'POST',body:{escopo:'global',texto:'x'.repeat(101),filtros:[]}}),400,'BUSCA_INVALIDA');
+expect(await call('/itens/busca',{method:'POST',body:{escopo:'global',colecao_id:privateCollection.data.id,filtros:[]}}),400,'BUSCA_INVALIDA');
 const suggestions=await call('/itens/filtros?escopo=global');expect(suggestions,200);assert(!suggestions.data.some(x=>x.chave.includes('segredo')));checks++;
 const mine=await call('/itens/busca',{method:'POST',token:t1,body:{escopo:'minhas',filtros:[{chave:'segredo',tipo:'numero',operador:'eq',valor:8}]}});expect(mine,200);assert.deepEqual(mine.data.map(x=>x.id),[hiddenItem.id]);
 expect(await call(`/itens/${publicItem.id}`,{token:t2}),200);

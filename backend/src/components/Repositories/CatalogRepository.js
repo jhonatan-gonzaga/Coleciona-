@@ -4,7 +4,7 @@ class CatalogRepository {
   async item(id){const _id=oid(id);return _id?(await db()).collection('itens').findOne({_id}):null}
   async activeItemsByIds(ids,filter={}){return (await db()).collection('itens').find({_id:{$in:ids},estado:'ativo',...filter}).toArray()}
   async publicCollectionsByIds(ids){return (await db()).collection('colecoes').find({_id:{$in:ids},estado:'ativa',visibilidade:'publica'},{projection:{_id:1}}).toArray()}
-  async myCollections(userId,skip,limit){const filter={usuario_id:oid(userId),estado:'ativa'},d=await db();return {rows:await d.collection('colecoes').find(filter).sort({criado_em:-1}).skip(skip).limit(limit).toArray(),total:await d.collection('colecoes').countDocuments(filter)}}
+  async myCollections(userId,skip,limit,name){const filter={usuario_id:oid(userId),estado:'ativa'},d=await db();if(name)filter.nome={$regex:name,$options:'i'};return {rows:await d.collection('colecoes').find(filter).sort({criado_em:-1}).skip(skip).limit(limit).toArray(),total:await d.collection('colecoes').countDocuments(filter)}}
   async itemsInCollection(collectionId,skip,limit){const filter={colecao_id:oid(collectionId),estado:'ativo'},d=await db();return {rows:await d.collection('itens').find(filter).sort({criado_em:-1}).skip(skip).limit(limit).toArray(),total:await d.collection('itens').countDocuments(filter)}}
   async countItems(collectionId){return (await db()).collection('itens').countDocuments({colecao_id:oid(collectionId),estado:'ativo'})}
   async suggestTags(userId,prefix){
