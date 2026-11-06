@@ -4,4 +4,6 @@
 
 Antes de iniciar, execute `../database/start-replica.sh` e `../database/setup.sh`. `GET /api/v1/health/live` testa o processo; `ready` testa leitura e escrita do primário. Erros de infraestrutura retornam 503.
 
+`GET /api/v1/etiquetas/minhas?q=bra` exige JWT e devolve até oito etiquetas dos itens ativos do próprio usuário que começam pelo texto informado, sem diferenciar maiúsculas e minúsculas.
+
 Para ensaios de consulta em uma base separada, defina `MONGODB_DB=coleciona_carga` antes de iniciar a API. A base principal continua `coleciona`. O total da busca é mantido em cache no processo e invalidado nas mutações desta API; para várias instâncias da API, implemente invalidação distribuída antes de usar essa otimização em produção.

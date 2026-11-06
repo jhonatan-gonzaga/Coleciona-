@@ -21,9 +21,14 @@ const publicCollection=await call('/colecoes',{method:'POST',token:t1,body:{nome
 const itemData=(name,visibility,key)=>({nome:name,visibilidade:visibility,atributos:[{chave:key,rotulo:key,tipo:'numero',valor:key==='vram_gb'?seed:8}]});
 async function make(collection,body,files=[png]){const r=await call(`/colecoes/${collection}/itens`,{method:'POST',token:t1,body,files});expect(r,201);return r.data}
 const publicItem=await make(publicCollection.data.id,itemData('Peça pública','publica','vram_gb'));
-const hiddenItem=await make(publicCollection.data.id,itemData('Peça privada','privada','segredo'));
-const hiddenCollectionItem=await make(privateCollection.data.id,itemData('Coleção privada','publica','outro_segredo'));
+const hiddenItem=await make(publicCollection.data.id,{...itemData('Peça privada','privada','segredo'),etiquetas:['Brasil','Brahma']});
+const hiddenCollectionItem=await make(privateCollection.data.id,{...itemData('Coleção privada','publica','outro_segredo'),etiquetas:['Brasil','C++']});
 const fullyPrivateItem=await make(privateCollection.data.id,itemData('Ambos privados','privada','segredo_duplo'));
+expect(await call('/etiquetas/minhas?q=bra'),401);
+const suggested=await call('/etiquetas/minhas?q=bra',{token:t1});expect(suggested,200);assert.deepEqual(suggested.data,['Brahma','Brasil']);checks++;
+const otherUser=await call('/etiquetas/minhas?q=bra',{token:t2});expect(otherUser,200);assert.deepEqual(otherUser.data,[]);checks++;
+const literal=await call('/etiquetas/minhas?q=C%2B%2B',{token:t1});expect(literal,200);assert.deepEqual(literal.data,['C++']);checks++;
+expect(await call(`/etiquetas/minhas?q=${'a'.repeat(51)}`,{token:t1}),400,'CONSULTA_INVALIDA');
 const fiveImages=await make(publicCollection.data.id,itemData('Cinco fotos','publica','ano'),[png,png,png,png,png]);
 const jpegItem=await make(publicCollection.data.id,itemData('JPEG','publica','formato_jpeg'),[jpeg]);assert.equal(jpegItem.imagens[0].tipo_mime,'image/jpeg');checks++;
 const webpItem=await make(publicCollection.data.id,itemData('WebP','publica','formato_webp'),[webp]);assert.equal(webpItem.imagens[0].tipo_mime,'image/webp');checks++;
@@ -78,6 +83,7 @@ const interactions=await call('/interacoes/minhas',{token:t2});expect(interactio
 expect(await call(`/comentarios/${comment.data.id}`,{method:'DELETE',token:t2}),204);
 expect(await call(`/itens/${publicItem.id}/avaliacao/minha`,{method:'DELETE',token:t2}),204);
 expect(await call(`/colecoes/${publicCollection.data.id}`,{method:'DELETE',token:t1}),204);
+const afterDeletion=await call('/etiquetas/minhas?q=bra',{token:t1});expect(afterDeletion,200);assert.deepEqual(afterDeletion.data,['Brasil']);checks++;
 expect(await call(`/itens/${publicItem.id}`,{token:t1}),404);
 assert(!(await call('/interacoes/minhas',{token:t2})).data.some(x=>x.item_id===publicItem.id));checks++;
 const raceItem=await make(privateCollection.data.id,itemData('Corrida de exclusão','privada','corrida'));
