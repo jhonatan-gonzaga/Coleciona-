@@ -3,7 +3,7 @@ const cors=require('cors');
 const {optionalAuth}=require('./middleware/authenticate');
 const {errorHandler}=require('./middleware/errorHandler');
 const app=express();
-app.disable('x-powered-by');app.use(cors());app.use(express.json({limit:'70kb'}));app.use('/api/v1',optionalAuth);
+app.disable('x-powered-by');app.use(cors());app.use(express.json({limit:'1mb'}));app.use('/api/v1',optionalAuth);
 app.use('/api/v1/auth',require('./routes/authRoutes'));
 app.use('/api/v1/health',require('./routes/healthRoutes'));
 app.use('/api/v1/imagens',require('./routes/imageRoutes'));
