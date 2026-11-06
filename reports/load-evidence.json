@@ -1,0 +1,11 @@
+{
+  "ambiente": {"cpu":"Intel Core i5-13420H","nucleos_logicos":12,"ram_total_bytes":7963365376,"mongo":"8.3.9","node":"20.20.2"},
+  "busca_filtros": [{"chave":"ano","tipo":"numero","operador":"gte","valor":1980},{"chave":"pais","tipo":"texto","operador":"eq","valor":"Brasil"},{"chave":"vram_gb","tipo":"numero","operador":"gte","valor":8}],
+  "rodadas": [
+    {"inicio_utc":"2026-11-06T00:11:38.708Z","database":"coleciona_carga_100k","itens":100000,"clientes":100,"duracao_s":10,"requisicoes":1000,"rps":100,"p95_ms":5.524292,"erros":0},
+    {"inicio_utc":"2026-11-06T00:11:54.062Z","database":"coleciona_carga_500k","itens":500000,"clientes":100,"duracao_s":10,"requisicoes":1000,"rps":100,"p95_ms":6.250855,"erros":0},
+    {"inicio_utc":"2026-11-06T00:09:58.096Z","database":"coleciona_carga","itens":1000000,"clientes":100,"duracao_s":10,"requisicoes":1000,"rps":100,"p95_ms":33.423078,"erros":0},
+    {"inicio_utc":"2026-11-06T00:13:43.490Z","database":"coleciona_carga","itens":1000000,"clientes":100,"duracao_s":10,"requisicoes":1000,"rps":100,"p95_ms":4.84039,"erros":0,"cache_aquecido":true},
+    {"inicio_utc":"2026-11-06T00:13:27.208Z","database":"coleciona","clientes":500,"duracao_s":10,"requisicoes":1000,"rps":100,"p95_ms":4.964259,"erros":0,"cenarios":{"busca":602,"detalhe":298,"edicao":100},"p95_por_cenario_ms":{"busca":4.601696,"detalhe":2.925285,"edicao":5.837492}}
+  ]
+}
