@@ -118,9 +118,9 @@ export default function CollectionDashboard({navigate,onError}){
   return <>
     <div className="page-title"><div><p className="eyebrow">Acervo pessoal</p><h1>Minhas coleções</h1></div><button onClick={()=>setForm(null)}>+ Nova coleção</button></div>
     <form className="name-search panel" role="search" onSubmit={event=>{event.preventDefault();searchByName(query)}}>
-      <label htmlFor="my-name-search">Nome da coleção ou do item</label>
+      <label htmlFor="my-name-search">Coleção, item, atributo ou valor</label>
       <div className="name-search-controls">
-        <input id="my-name-search" type="search" maxLength="100" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Buscar no meu acervo"/>
+        <input id="my-name-search" type="search" maxLength="100" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Ex.: moedas, país, Brasil, 1980"/>
         <button type="submit">Buscar</button>
         {appliedQuery&&<button type="button" className="subtle" onClick={()=>searchByName('')}>Limpar</button>}
       </div>

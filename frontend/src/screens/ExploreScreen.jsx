@@ -60,9 +60,9 @@ export default function ExploreScreen({navigate,onError}){
       <h1>Peças com histórias.<br/>Detalhes que conectam.</h1>
       <p>Explore coleções públicas e encontre itens por nome ou por características criadas por seus donos.</p>
       <form className="name-search" role="search" onSubmit={event=>{event.preventDefault();search(query)}}>
-        <label htmlFor="explore-name">Nome da coleção ou do item</label>
+        <label htmlFor="explore-name">Coleção, item, atributo ou valor</label>
         <div className="name-search-controls">
-          <input id="explore-name" type="search" maxLength="100" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Ex.: selos, moedas, coleção de família"/>
+          <input id="explore-name" type="search" maxLength="100" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Ex.: selos, ano, Brasil, 1980"/>
           <button type="submit">Buscar</button>
           {appliedQuery&&<button type="button" className="subtle" onClick={()=>search('')}>Limpar</button>}
         </div>
