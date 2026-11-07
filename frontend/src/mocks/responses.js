@@ -15,7 +15,6 @@ export const responses={
   'POST /itens/:id/imagens':{data:[image]},'PUT /imagens/:id':{data:image},
   'PATCH /itens/:id/imagens/ordem':{data:[image]},'DELETE /imagens/:id':{data:[image]},
   'GET /imagens/:id/arquivo':{status:200,headers:{'Content-Type':'image/png','Cache-Control':'private, no-store'},body:'bytes PNG'},
-  'GET /explorar/colecoes':paged([collection]),
   'GET /itens/filtros':{data:[{chave:'ano',tipo:'numero'}]},
   'POST /itens/busca':paged([item]),
   'GET /itens/:id/avaliacoes/resumo':{data:{media:4,quantidade:1}},
