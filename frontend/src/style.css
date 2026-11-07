@@ -196,6 +196,8 @@ textarea{min-height:95px;resize:vertical;line-height:1.5}
 .detail-layout .gallery{grid-template-columns:repeat(3,1fr)}
 .detail-layout .gallery-item:first-child{grid-column:span 3}
 .detail-layout .gallery-item:first-child img{aspect-ratio:4/3}
+.image-credits{display:flex;flex-wrap:wrap;gap:4px 9px;margin-top:10px;color:var(--muted);font-size:12px;line-height:1.45}
+.image-credits a{color:var(--accent-dark);text-decoration:underline;text-underline-offset:2px}
 .detail-info h1{margin-bottom:18px}
 .detail-info>p{max-width:58ch;line-height:1.6;color:var(--muted)}
 .detail-info .eyebrow{color:var(--accent)}

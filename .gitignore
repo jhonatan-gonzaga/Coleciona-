@@ -6,6 +6,8 @@ database/run/
 database/backups/
 storage/uploads/
 storage/tmp/
+storage/online-seed/
+storage/online-image-credits.json
 **/dist/
 **/coverage/
 *.log
