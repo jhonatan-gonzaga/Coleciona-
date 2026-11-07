@@ -83,7 +83,7 @@ export default function ItemDetails({id,user,navigate,onError}){
     <div className="detail-layout">
       <div><ImageGallery images={item.imagens} name={item.nome}/></div>
       <div className="detail-info">
-        <p className="eyebrow">{item.colecao_nome||'Coleção'} · {item.visibilidade}{item.favorito?' · favorito':''}</p>
+        <p className="eyebrow">{item.colecao_nome||'Coleção'}{item.dono_nome&&` · por ${item.dono_nome}`} · {item.visibilidade}{item.favorito?' · favorito':''}</p>
         <h1>{item.nome}</h1>
         <div className="item-rating-summary"><RatingStars value={summary?.media}/><span>{ratingText(summary)}</span></div>
         <p>{item.descricao}</p>

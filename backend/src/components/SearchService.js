@@ -2,9 +2,10 @@ const {fail}=require('../middleware/errorHandler');
 const {page}=require('./validation');
 const {oid,serialize}=require('./Repositories/mongoClient');
 const SearchRepository=require('./Repositories/SearchRepository');
+const AuthRepository=require('./Repositories/AuthRepository');
 const AccessControlService=require('./AccessControlService');
 const images=require('./ImageService');
-const repo=new SearchRepository(),access=new AccessControlService();
+const repo=new SearchRepository(),access=new AccessControlService(),users=new AuthRepository();
 function scope(value,actor){if(!['global','minhas'].includes(value))fail(400,'ESCOPO_INVALIDO','Escopo deve ser global ou minhas.');if(value==='minhas'&&!actor)fail(401,'NAO_AUTENTICADO','Autenticação necessária.');return value}
 function searchTerm(value){if(value===undefined)return '';if(typeof value!=='string'||value.trim().length>100)fail(400,'BUSCA_INVALIDA','A busca deve ter até 100 caracteres.');return value.trim()}
 function namePattern(value){return value.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
@@ -24,7 +25,7 @@ function textConditions(term,collectionIds){
 }
 async function baseFilter(escopo,actor){if(escopo==='minhas')return {usuario_id:oid(actor),estado:'ativo'};return {estado:'ativo',visibilidade:'publica',colecao_id:{$in:await repo.publicCollectionIds()}}}
 function validatedFilters(filters){if(!Array.isArray(filters)||filters.length>3)fail(400,'FILTROS_INVALIDOS','Envie até três filtros.');return filters.map(f=>{if(!f||typeof f!=='object'||Array.isArray(f)||typeof f.chave!=='string'||! /^[a-z0-9_]{1,50}$/.test(f.chave)||!['texto','numero','data','booleano','opcao'].includes(f.tipo))fail(400,'FILTROS_INVALIDOS','Chave ou tipo inválido.');const allowed=f.tipo==='numero'||f.tipo==='data'?['eq','in','gte','lte']:['eq','in'];if(!allowed.includes(f.operador))fail(400,'FILTROS_INVALIDOS','Operador inválido.');let values=f.operador==='in'?f.valor:[f.valor];if(!Array.isArray(values)||!values.length||values.length>50)fail(400,'FILTROS_INVALIDOS','Valor inválido.');values=values.map(v=>{if(f.tipo==='numero'){if(typeof v!=='number'||!Number.isFinite(v))fail(400,'FILTROS_INVALIDOS','Número inválido.');return v}if(f.tipo==='booleano'){if(typeof v!=='boolean')fail(400,'FILTROS_INVALIDOS','Booleano inválido.');return v}if(f.tipo==='data'){if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v)||Number.isNaN(Date.parse(v)))fail(400,'FILTROS_INVALIDOS','Data inválida.');return new Date(`${v}T00:00:00.000Z`)}if(typeof v!=='string'||v.length>500)fail(400,'FILTROS_INVALIDOS','Texto inválido.');return v});return {atributos:{$elemMatch:{chave:f.chave,tipo:f.tipo,valor:f.operador==='in'?{$in:values}:f.operador==='eq'?values[0]:{[`$${f.operador}`]:values[0]}}}}})}
-async function explorar(query){const pg=page(query),term=searchTerm(query.q),result=await repo.publicCollections(pg.skip,pg.tamanho,term?namePattern(term):'');const rows=[];for(const c of result.rows){const current=await new (require('./Repositories/CatalogRepository'))().collection(c._id);if(current?.estado==='ativa'&&current.visibilidade==='publica')rows.push({...serialize(c),quantidade_itens:await repo.countPublicItems(c._id)})}return {data:rows,meta:{pagina:pg.pagina,tamanho:pg.tamanho,total:result.total}}}
+async function explorar(query){const pg=page(query),term=searchTerm(query.q),result=await repo.publicCollections(pg.skip,pg.tamanho,term?namePattern(term):'');const owners=await users.byIds([...new Map(result.rows.map(c=>[String(c.usuario_id),c.usuario_id])).values()]),ownerNames=new Map(owners.map(user=>[String(user._id),user.nome]));const rows=[];for(const c of result.rows){const current=await new (require('./Repositories/CatalogRepository'))().collection(c._id);if(current?.estado==='ativa'&&current.visibilidade==='publica')rows.push({...serialize(c),dono_nome:ownerNames.get(String(c.usuario_id)),quantidade_itens:await repo.countPublicItems(c._id)})}return {data:rows,meta:{pagina:pg.pagina,tamanho:pg.tamanho,total:result.total}}}
 async function filtros(escopo,actor){scope(escopo,actor);const rows=await repo.discover(await baseFilter(escopo,actor));return {data:rows.map(row=>({chave:row._id.chave,tipo:row._id.tipo,...(['texto','opcao','booleano'].includes(row._id.tipo)?{valores:row.valores.slice(0,100)}:{})}))}}
 async function busca(body,actor){
   const escopo=scope(body?.escopo,actor),pg=page(body||{}),filter=await baseFilter(escopo,actor);
@@ -46,8 +47,10 @@ async function busca(body,actor){
     images.byItems(allowed.map(item=>item._id)),
     repo.collectionNames([...new Map(allowed.map(item=>[String(item.colecao_id),item.colecao_id])).values()])
   ]);
-  const names=new Map(collections.map(collection=>[String(collection._id),collection.nome]));
-  const rows=allowed.map(item=>({...serialize(item),colecao_nome:names.get(String(item.colecao_id)),imagens:galleries.get(String(item._id))||[]}));
+  const owners=await users.byIds([...new Map(collections.map(collection=>[String(collection.usuario_id),collection.usuario_id])).values()]);
+  const names=new Map(collections.map(collection=>[String(collection._id),collection]));
+  const ownerNames=new Map(owners.map(user=>[String(user._id),user.nome]));
+  const rows=allowed.map(item=>{const collection=names.get(String(item.colecao_id));return {...serialize(item),colecao_nome:collection?.nome,dono_nome:ownerNames.get(String(collection?.usuario_id)),imagens:galleries.get(String(item._id))||[]}});
   return {data:rows,meta:{pagina:pg.pagina,tamanho:pg.tamanho,total:result.total}}
 }
 module.exports={explorar,filtros,busca,validatedFilters};

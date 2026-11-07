@@ -57,13 +57,13 @@ export default function ExploreScreen({navigate,onError}){
       <div className="hero-feature">
         {featured?<button type="button" className="hero-feature-link" onClick={()=>navigate('detalhe',{id:featured.id})}>
           <div className="hero-feature-photo"><ImageGallery images={[featured.imagens[0]]} name={featured.nome}/></div>
-          <span>Uma peça do acervo</span><strong>{featured.nome}</strong><small>{featured.colecao_nome}</small>
+          <span>Uma peça do acervo</span><strong>{featured.nome}</strong><small>{featured.colecao_nome}{featured.dono_nome&&` · por ${featured.dono_nome}`}</small>
         </button>:<div className="hero-feature-empty"><strong>Um lugar para cada descoberta.</strong><span>Os itens públicos aparecem aqui quando são cadastrados.</span></div>}
       </div>
     </div>
     <div className="section-head"><h2>Itens para explorar</h2><span className="muted">{total} encontrados</span></div>
     <SearchFilters available={available} filters={filters} onChange={setFilters} onSubmit={next=>{const chosen=next||filters;setAppliedFilters(chosen);load(1,chosen,appliedQuery)}}/>
-    {items.length?<div className="item-grid">{items.map(item=><article className="item-card" key={item.id}><div className="card-cover">{item.imagens?.[0]&&<ImageGallery images={[item.imagens[0]]} name={item.nome}/>}</div><div className="card-body"><small>{item.colecao_nome||'Coleção'} · {item.atributos?.length||0} atributos</small><h3>{item.nome}</h3><p>{item.descricao}</p><button className="subtle" onClick={()=>navigate('detalhe',{id:item.id})}>Ver detalhes →</button></div></article>)}</div>:<p className="empty">Nenhum item público encontrado.</p>}
+    {items.length?<div className="item-grid">{items.map(item=><article className="item-card" key={item.id}><div className="card-cover">{item.imagens?.[0]&&<ImageGallery images={[item.imagens[0]]} name={item.nome}/>}</div><div className="card-body"><small>{item.colecao_nome||'Coleção'}{item.dono_nome&&` · por ${item.dono_nome}`} · {item.atributos?.length||0} atributos</small><h3>{item.nome}</h3><p>{item.descricao}</p><button className="subtle" onClick={()=>navigate('detalhe',{id:item.id})}>Ver detalhes →</button></div></article>)}</div>:<p className="empty">Nenhum item público encontrado.</p>}
     {total>20&&<div className="pagination"><button disabled={page<=1} onClick={()=>load(page-1,appliedFilters,appliedQuery)}>Anterior</button><span>Página {page}</span><button disabled={page*20>=total} onClick={()=>load(page+1,appliedFilters,appliedQuery)}>Próxima</button></div>}
   </>
 }

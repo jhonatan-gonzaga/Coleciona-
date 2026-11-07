@@ -1,7 +1,7 @@
 // Exemplos do contrato HTTP para desenvolvimento visual sem API.
 const image={id:'imagem_01',item_id:'item_01',ordem:0,tipo_mime:'image/png',tamanho_bytes:96,url:'/api/v1/imagens/imagem_01/arquivo'};
-const item={id:'item_01',colecao_id:'colecao_01',usuario_id:'usuario_01',nome:'Selo comemorativo',descricao:'Miniatura de 1980',visibilidade:'publica',estado:'ativo',atributos:[{chave:'ano',rotulo:'Ano',tipo:'numero',valor:1980}],etiquetas:['selo'],favorito:false,imagens:[image]};
-const collection={id:'colecao_01',usuario_id:'usuario_01',nome:'Objetos curiosos',descricao:'Acervo público',visibilidade:'publica',estado:'ativa',quantidade_itens:1};
+const item={id:'item_01',colecao_id:'colecao_01',usuario_id:'usuario_01',nome:'Selo comemorativo',colecao_nome:'Objetos curiosos',dono_nome:'Ana',descricao:'Miniatura de 1980',visibilidade:'publica',estado:'ativo',atributos:[{chave:'ano',rotulo:'Ano',tipo:'numero',valor:1980}],etiquetas:['selo'],favorito:false,imagens:[image]};
+const collection={id:'colecao_01',usuario_id:'usuario_01',nome:'Objetos curiosos',dono_nome:'Ana',descricao:'Acervo público',visibilidade:'publica',estado:'ativa',quantidade_itens:1};
 const paged=data=>({data,meta:{pagina:1,tamanho:20,total:data.length}});
 export const responses={
   'POST /auth/cadastro':{data:{id:'usuario_01',nome:'Ana',email:'ana@example.test'}},

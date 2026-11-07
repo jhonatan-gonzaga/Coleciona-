@@ -130,7 +130,7 @@ export default function CollectionDashboard({navigate,onError}){
       <aside className="collection-list">
         <h2>Coleções</h2>
         {collections.length===0?<p className="muted">{appliedQuery?'Nenhuma coleção com esse nome.':'Crie sua primeira coleção.'}</p>:collections.map(collection=><article className={`collection-row ${selected?.id===collection.id?'selected':''}`} key={collection.id}>
-          <button className="row-main" onClick={()=>selectCollection(collection)}><strong>{collection.nome}</strong><small>{collection.quantidade_itens} itens · {collection.visibilidade}</small></button>
+          <button className="row-main" onClick={()=>selectCollection(collection)}><strong>{collection.nome}</strong>{collection.dono_nome&&<small>Por {collection.dono_nome}</small>}<small>{collection.quantidade_itens} itens · {collection.visibilidade}</small></button>
           <div className="actions"><button className="subtle" onClick={()=>setForm(collection)}>Editar</button><button className="danger-link" onClick={()=>removeCollection(collection)}>Excluir</button></div>
         </article>)}
         {collectionTotal>20&&<div className="pagination"><button disabled={collectionPage<=1} onClick={()=>loadCollections(appliedQuery,collectionPage-1)}>Anterior</button><span>Página {collectionPage}</span><button disabled={collectionPage*20>=collectionTotal} onClick={()=>loadCollections(appliedQuery,collectionPage+1)}>Próxima</button></div>}
