@@ -10,4 +10,17 @@ Execute `./start-replica.sh` e `./setup.sh` uma vez; repetir é seguro. URI: `mo
 
 Para dados demonstrativos, `npm install && npm run seed` nesta pasta cria dois usuários, três coleções, quatro itens, nove arquivos PNG reais, nota e comentário. Senha padrão: `coleciona-demo-123`; use `SEED_PASSWORD` para alterá-la. O script é idempotente por `seed_tag`.
 
+Para substituir **todas** as coleções da base `coleciona` por um acervo com fotos da internet, execute `npm run seed:online` nesta pasta. O script baixa e valida as fotos antes de apagar as coleções, itens, imagens, avaliações e comentários antigos; mantém as outras contas. Cria seis contas, duas coleções públicas por conta, dez itens por coleção e uma foto WebP real por item (12 coleções, 120 itens, 120 fotos). É possível fazer as etapas separadamente com `node seed-online.js prepare` e, após conferir os arquivos em `storage/online-seed/`, `node seed-online.js apply`.
+
+As fotos vêm de resultados do Flickr indexados pelo Openverse, filtrados para CC0 ou Public Domain Mark. A origem e o autor aparecem no detalhe do item e no arquivo local `storage/online-image-credits.json`. As contas usam a senha `coleciona-demo-123` por padrão (`SEED_PASSWORD` para alterá-la):
+
+| Conta | Coleções |
+| --- | --- |
+| `ana.filatelia@coleciona.local` | Selos postais; Cartões postais |
+| `bruno.numismatica@coleciona.local` | Moedas antigas; Cédulas do mundo |
+| `clara.natureza@coleciona.local` | Fósseis; Minerais e cristais |
+| `diego.fotografia@coleciona.local` | Câmeras clássicas; Lentes fotográficas |
+| `elisa.musica@coleciona.local` | Discos de vinil; Guitarras |
+| `fabio.transportes@coleciona.local` | Carros clássicos; Bicicletas |
+
 `node seed-load.js 100000|500000|1000000 [identificador]` cria uma base **separada**, `coleciona_carga`, só para consultas. Use `LOAD_DB=outro_nome` para bases comparáveis isoladas. Seus itens não têm fotos físicas e **não são um ensaio de persistência de imagens**; a API normal continua apontando para `coleciona`. Cada lote pode ser repetido sem duplicar itens até a contagem alvo.

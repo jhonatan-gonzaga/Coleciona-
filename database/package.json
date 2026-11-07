@@ -1,1 +1,1 @@
-{"name":"coleciona-database-tools","version":"1.0.0","private":true,"scripts":{"seed":"node seed.js","seed:load":"node seed-load.js"},"dependencies":{"bcryptjs":"^2.4.3","mongodb":"^6.16.0","sharp":"^0.33.5"}}
+{"name":"coleciona-database-tools","version":"1.0.0","private":true,"scripts":{"seed":"node seed.js","seed:online":"node seed-online.js run","seed:load":"node seed-load.js"},"dependencies":{"bcryptjs":"^2.4.3","mongodb":"^6.16.0","sharp":"^0.33.5"}}
