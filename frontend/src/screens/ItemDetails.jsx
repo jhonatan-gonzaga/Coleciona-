@@ -81,7 +81,10 @@ export default function ItemDetails({id,user,navigate,onError}){
   return <>
     <button className="subtle back" onClick={()=>navigate(owner?'minhas':'explorar')}>← Voltar</button>
     <div className="detail-layout">
-      <div><ImageGallery images={item.imagens} name={item.nome}/></div>
+      <div>
+        <ImageGallery images={item.imagens} name={item.nome}/>
+        {item.imagens?.some(image=>image.origem_url)&&<div className="image-credits">Fonte das imagens: {item.imagens.map((image,index)=>image.origem_url&&<a key={image.id} href={image.origem_url} target="_blank" rel="noopener noreferrer">{image.origem_autor||`Foto ${index+1}`} ({image.origem_licenca?.toUpperCase()||'fonte'})</a>)}</div>}
+      </div>
       <div className="detail-info">
         <p className="eyebrow">{item.colecao_nome||'Coleção'}{item.dono_nome&&` · por ${item.dono_nome}`} · {item.visibilidade}{item.favorito?' · favorito':''}</p>
         <h1>{item.nome}</h1>
