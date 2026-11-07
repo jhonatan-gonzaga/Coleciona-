@@ -11,3 +11,5 @@ Em Explorar e Minhas coleções, o campo de busca encontra coleções e itens pe
 Ao adicionar um filtro, digite no campo **Atributo** para ver sugestões dos atributos existentes. Escolha uma sugestão com clique ou com as setas e Enter.
 
 Na página de um item, a média das avaliações aparece em estrelas ao lado do título, inclusive para visitantes. Usuários autenticados podem selecionar de uma a cinco estrelas, enviar sua nota e alterá-la depois; a seleção existente é carregada ao abrir o item novamente.
+
+O nome de exibição do dono aparece junto ao nome da coleção nas listas e nos detalhes dos itens. Em **Minhas coleções**, ele aparece abaixo do título de cada coleção.
