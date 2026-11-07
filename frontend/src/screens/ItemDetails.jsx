@@ -23,7 +23,7 @@ function ratingText(summary){
   return `${average} de 5 · ${count} ${count===1?'avaliação':'avaliações'}`;
 }
 
-export default function ItemDetails({id,user,navigate,onError}){
+export default function ItemDetails({id,user,navigate,onError,fromCollection}){
   const[item,setItem]=useState(null);
   const[summary,setSummary]=useState(null);
   const[myRating,setMyRating]=useState(null);
@@ -79,7 +79,7 @@ export default function ItemDetails({id,user,navigate,onError}){
   const owner=user?.id===item.usuario_id;
 
   return <>
-    <button className="subtle back" onClick={()=>navigate(owner?'minhas':'explorar')}>← Voltar</button>
+    <button className="subtle back" onClick={()=>fromCollection?navigate('explorar',{collection:fromCollection}):navigate(owner?'minhas':'explorar')}>← Voltar</button>
     <div className="detail-layout">
       <div>
         <ImageGallery images={item.imagens} name={item.nome}/>
