@@ -19,6 +19,7 @@ export const responses={
   'GET /itens/filtros':{data:[{chave:'ano',tipo:'numero'}]},
   'POST /itens/busca':paged([item]),
   'GET /itens/:id/avaliacoes/resumo':{data:{media:4,quantidade:1}},
+  'GET /itens/:id/avaliacao/minha':{data:{id:'avaliacao_01',item_id:item.id,nota:4}},
   'PUT /itens/:id/avaliacao/minha':{data:{id:'avaliacao_01',item_id:item.id,nota:4}},
   'DELETE /itens/:id/avaliacao/minha':null,
   'GET /itens/:id/comentarios':paged([{id:'comentario_01',item_id:item.id,usuario_id:'usuario_02',texto:'Bonito selo.'}]),

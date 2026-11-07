@@ -204,6 +204,18 @@ textarea{min-height:95px;resize:vertical;line-height:1.5}
 .detail-info h1{margin-bottom:18px}
 .detail-info>p{max-width:58ch;line-height:1.6;color:var(--muted)}
 .detail-info .eyebrow{color:var(--accent)}
+.item-rating-summary{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:-5px 0 22px;color:var(--muted);font-size:14px}
+.rating-stars{position:relative;display:inline-block;flex:none;font-family:Arial,sans-serif;font-size:25px;letter-spacing:2px;line-height:1;white-space:nowrap}
+.rating-stars-back{color:#bac9c5}
+.rating-stars-front{position:absolute;top:0;left:0;overflow:hidden;color:#b88746}
+.rating-stars-small{font-size:20px}
+.rating-form{display:flex;flex-direction:column;align-items:flex-start;gap:11px;margin:6px 0 30px;padding:19px 21px;background:#edf4f0;border:1px solid var(--line);border-radius:5px}
+.rating-form-label{font-size:13px;font-weight:650}
+.rating-form-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.rating-picker{display:flex;gap:1px}
+.rating-picker button{min-width:36px;padding:2px;background:transparent;color:#a7b8b3;font-family:Arial,sans-serif;font-size:32px;line-height:1;border-radius:3px}
+.rating-picker button:hover,.rating-picker button.selected{background:transparent;color:var(--brass)}
+.rating-selection{min-width:115px;color:var(--muted);font-size:13px}
 .detail-info h2{margin:30px 0 12px;font-size:29px}
 .tags{display:flex;flex-wrap:wrap;gap:7px}
 .tags span,.attribute-values span{padding:5px 9px;background:var(--soft);color:var(--accent-dark);font-size:12px;border-radius:3px}
@@ -223,6 +235,7 @@ textarea{min-height:95px;resize:vertical;line-height:1.5}
 .interaction-row{display:flex;justify-content:space-between;align-items:start;gap:20px;padding:19px 0;border-bottom:1px solid var(--line)}
 .interaction-row p{white-space:pre-wrap;line-height:1.5;margin:7px 0 0}
 .interaction-row small{color:var(--muted)}
+.interaction-rating{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;color:var(--muted)}
 .interaction-list{max-width:960px}
 .access-layout{display:grid;grid-template-columns:1.05fr .95fr;gap:0;min-height:68vh;align-items:stretch;background:#e2edeb;border:1px solid var(--line)}
 .access-layout>div{display:flex;flex-direction:column;justify-content:center;padding:clamp(32px,5vw,72px);background:var(--deep);color:#fff}

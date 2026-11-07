@@ -9,3 +9,5 @@ Em **Atributos personalizados**, cada característica tem nome, tipo e valor. O 
 Em Explorar e Minhas coleções, o campo de busca encontra coleções e itens pelo nome, além de atributos pelo nome ou valor. A busca em Explorar mostra apenas conteúdo público; a busca em Minhas coleções inclui o acervo privado da conta. O termo pode ser combinado com os filtros por atributos.
 
 Ao adicionar um filtro, digite no campo **Atributo** para ver sugestões dos atributos existentes. Escolha uma sugestão com clique ou com as setas e Enter.
+
+Na página de um item, a média das avaliações aparece em estrelas ao lado do título, inclusive para visitantes. Usuários autenticados podem selecionar de uma a cinco estrelas, enviar sua nota e alterá-la depois; a seleção existente é carregada ao abrir o item novamente.
