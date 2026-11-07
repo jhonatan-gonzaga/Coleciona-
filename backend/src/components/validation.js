@@ -6,7 +6,32 @@ function text(value,max,required=false){if(typeof value!=='string'||value.trim()
 function visibility(value){if(!visibilities.includes(value))fail(422,'VISIBILIDADE_INVALIDA','Visibilidade deve ser publica ou privada.');return value}
 function page(query){const p=query.pagina===undefined?1:Number(query.pagina),t=query.tamanho===undefined?20:Number(query.tamanho);if(!Number.isInteger(p)||p<1||!Number.isInteger(t)||t<1||t>50)fail(400,'PAGINACAO_INVALIDA','Página e tamanho inválidos; máximo 50.');return {pagina:p,tamanho:t,skip:(p-1)*t}}
 function normalizeKey(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'')}
-function attributes(list){if(!Array.isArray(list)||list.length>50)fail(422,'ATRIBUTOS_INVALIDOS','Máximo de 50 atributos.');const seen=new Set();return list.map(a=>{if(!a||typeof a!=='object'||Array.isArray(a))fail(422,'ATRIBUTOS_INVALIDOS','Atributo inválido.');const rotulo=text(a.rotulo,50,true),chave=normalizeKey(a.chave||rotulo),tipo=a.tipo;if(!chave||chave.length>50||!types.includes(tipo)||seen.has(chave))fail(422,'ATRIBUTOS_INVALIDOS','Chave ou tipo inválido, ou chave duplicada.');seen.add(chave);let valor=a.valor;if(tipo==='numero'){if(typeof valor!=='number'||!Number.isFinite(valor))fail(422,'ATRIBUTOS_INVALIDOS','Número inválido.')}else if(tipo==='booleano'){if(typeof valor!=='boolean')fail(422,'ATRIBUTOS_INVALIDOS','Booleano inválido.')}else if(tipo==='data'){if(typeof valor!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(valor)||Number.isNaN(Date.parse(valor)))fail(422,'ATRIBUTOS_INVALIDOS','Data inválida.');valor=new Date(`${valor}T00:00:00.000Z`)}else{valor=text(valor,500,true)}return {chave,rotulo,tipo,valor}})}
+function attributes(list){
+  if(!Array.isArray(list)||list.length>50)fail(422,'ATRIBUTOS_INVALIDOS','Máximo de 50 atributos.');
+  const seen=new Set();
+  return list.map(attribute=>{
+    if(!attribute||typeof attribute!=='object'||Array.isArray(attribute))fail(422,'ATRIBUTOS_INVALIDOS','Atributo inválido.');
+    const rotulo=text(attribute.rotulo,50,true),chave=normalizeKey(attribute.chave||rotulo),tipo=attribute.tipo;
+    if(!chave||chave.length>50||!types.includes(tipo)||seen.has(chave))fail(422,'ATRIBUTOS_INVALIDOS','Chave ou tipo inválido, ou chave duplicada.');
+    seen.add(chave);
+    let valor=attribute.valor;
+    if(tipo==='numero'){
+      if(typeof valor!=='number'||!Number.isFinite(valor))fail(422,'ATRIBUTOS_INVALIDOS','Número inválido.');
+    }else if(tipo==='booleano'){
+      if(typeof valor!=='boolean')fail(422,'ATRIBUTOS_INVALIDOS','Booleano inválido.');
+    }else if(tipo==='data'){
+      if(typeof valor!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(valor)||Number.isNaN(Date.parse(valor)))fail(422,'ATRIBUTOS_INVALIDOS','Data inválida.');
+      valor=new Date(`${valor}T00:00:00.000Z`);
+    }else if(tipo==='opcao'){
+      const values=Array.isArray(valor)?valor:[valor];
+      if(!values.length||values.length>20)fail(422,'ATRIBUTOS_INVALIDOS','Informe de 1 a 20 valores para Opções.');
+      valor=values.map(value=>text(value,500,true));
+      const unique=new Set(valor.map(value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()));
+      if(unique.size!==valor.length)fail(422,'ATRIBUTOS_INVALIDOS','Valores de Opções não podem se repetir.');
+    }else valor=text(valor,500,true);
+    return {chave,rotulo,tipo,valor};
+  })
+}
 function itemFields(body,partial=false){if(!body||typeof body!=='object'||Array.isArray(body))fail(422,'DADOS_INVALIDOS','Dados do item inválidos.');const out={};if(own(body,'nome')||!partial)out.nome=text(body.nome,100,true);if(own(body,'descricao'))out.descricao=text(body.descricao,500);if(own(body,'visibilidade'))out.visibilidade=visibility(body.visibilidade);else if(!partial)out.visibilidade='privada';if(own(body,'atributos'))out.atributos=attributes(body.atributos);else if(!partial)out.atributos=[];if(own(body,'etiquetas')){if(!Array.isArray(body.etiquetas)||body.etiquetas.length>20)fail(422,'DADOS_INVALIDOS','Etiquetas inválidas.');out.etiquetas=body.etiquetas.map(x=>text(x,50,true))}else if(!partial)out.etiquetas=[];if(own(body,'favorito')){if(typeof body.favorito!=='boolean')fail(422,'DADOS_INVALIDOS','Favorito deve ser booleano.');out.favorito=body.favorito}else if(!partial)out.favorito=false;if(Buffer.byteLength(JSON.stringify(out))>65536)fail(422,'ITEM_GRANDE','Item excede 64 KB.');return out}
 function collectionFields(body,partial=false){if(!body||typeof body!=='object'||Array.isArray(body))fail(422,'DADOS_INVALIDOS','Dados da coleção inválidos.');const out={};if(own(body,'nome')||!partial)out.nome=text(body.nome,100,true);if(own(body,'descricao'))out.descricao=text(body.descricao,500);if(own(body,'visibilidade'))out.visibilidade=visibility(body.visibilidade);else if(!partial)out.visibilidade='privada';return out}
 module.exports={page,itemFields,collectionFields,normalizeKey};

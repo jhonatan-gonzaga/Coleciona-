@@ -15,6 +15,7 @@ function textConditions(term,collectionIds){
     {colecao_id:{$in:collectionIds}},
     {'atributos.rotulo':{$regex:pattern,$options:'i'}},
     {'atributos.chave':{$regex:pattern,$options:'i'}},
+    {'atributos.valor':{$regex:pattern,$options:'i'}},
     attributeValueMatch(pattern)
   ];
   const booleanTerm=term.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
