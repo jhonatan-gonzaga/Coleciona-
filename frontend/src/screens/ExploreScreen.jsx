@@ -54,19 +54,29 @@ export default function ExploreScreen({navigate,onError}){
     load(1,appliedFilters,term);
   }
 
+  const featured=items.find(item=>item.imagens?.[0]);
+
   return <>
     <div className="explore-hero">
-      <p className="eyebrow">Descubra outros acervos</p>
-      <h1>Peças com histórias.<br/>Detalhes que conectam.</h1>
-      <p>Explore coleções públicas e encontre itens por nome ou por características criadas por seus donos.</p>
-      <form className="name-search" role="search" onSubmit={event=>{event.preventDefault();search(query)}}>
-        <label htmlFor="explore-name">Coleção, item, atributo ou valor</label>
-        <div className="name-search-controls">
-          <input id="explore-name" type="search" maxLength="100" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Ex.: selos, ano, Brasil, 1980"/>
-          <button type="submit">Buscar</button>
-          {appliedQuery&&<button type="button" className="subtle" onClick={()=>search('')}>Limpar</button>}
-        </div>
-      </form>
+      <div className="hero-copy">
+        <p className="eyebrow">Acervos abertos</p>
+        <h1>Peças guardadas.<br/>Histórias em circulação.</h1>
+        <p>Encontre objetos por nome, coleção ou qualquer detalhe registrado por quem os guarda.</p>
+        <form className="name-search" role="search" onSubmit={event=>{event.preventDefault();search(query)}}>
+          <label htmlFor="explore-name">O que você procura?</label>
+          <div className="name-search-controls">
+            <input id="explore-name" type="search" maxLength="100" value={query} onChange={event=>setQuery(event.target.value)} placeholder="Nome, coleção, atributo ou valor"/>
+            <button type="submit">Buscar</button>
+            {appliedQuery&&<button type="button" className="subtle" onClick={()=>search('')}>Limpar</button>}
+          </div>
+        </form>
+      </div>
+      <div className="hero-feature">
+        {featured?<button type="button" className="hero-feature-link" onClick={()=>navigate('detalhe',{id:featured.id})}>
+          <div className="hero-feature-photo"><ImageGallery images={[featured.imagens[0]]} name={featured.nome}/></div>
+          <span>Uma peça do acervo</span><strong>{featured.nome}</strong><small>{featured.colecao_nome}</small>
+        </button>:<div className="hero-feature-empty"><strong>Um lugar para cada descoberta.</strong><span>Os itens públicos aparecem aqui quando são cadastrados.</span></div>}
+      </div>
     </div>
     <div className="section-head"><h2>Coleções públicas</h2><span className="muted">{collectionTotal} no total</span></div>
     <div className="collection-strip">{collections.length?collections.map(collection=><div className="collection-chip" key={collection.id}><strong>{collection.nome}</strong><small>{collection.quantidade_itens} itens públicos</small></div>):<p className="muted">{appliedQuery?'Nenhuma coleção com esse nome.':'Ainda não há coleções públicas.'}</p>}</div>
