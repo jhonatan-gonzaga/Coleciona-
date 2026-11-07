@@ -3,6 +3,7 @@ const service=require('../components/InteractionService');
 const {requireAuth}=require('../middleware/authenticate');
 const {asyncRoute}=require('../middleware/errorHandler');
 router.get('/itens/:id/avaliacoes/resumo',asyncRoute(async(req,res)=>res.json({data:await service.resumo(req.actorId,req.params.id)})));
+router.get('/itens/:id/avaliacao/minha',requireAuth,asyncRoute(async(req,res)=>res.json({data:await service.minhaAvaliacao(req.actorId,req.params.id)})));
 router.put('/itens/:id/avaliacao/minha',requireAuth,asyncRoute(async(req,res)=>res.json({data:await service.avaliar(req.actorId,req.params.id,req.body)})));
 router.delete('/itens/:id/avaliacao/minha',requireAuth,asyncRoute(async(req,res)=>{await service.removerAvaliacao(req.actorId,req.params.id);res.status(204).end()}));
 router.get('/itens/:id/comentarios',asyncRoute(async(req,res)=>res.json(await service.comentarios(req.actorId,req.params.id,req.query))));
