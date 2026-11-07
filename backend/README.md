@@ -8,6 +8,8 @@ Antes de iniciar, execute `../database/start-replica.sh` e `../database/setup.sh
 
 Atributos do tipo `opcao` aceitam de 1 a 20 valores em `valor`, por exemplo `"valor":["Azul","Verde"]`. Valores antigos enviados como texto único continuam aceitos e são normalizados para uma lista. Cada opção pode ser encontrada pela busca de texto e pelos filtros.
 
+`GET /api/v1/itens/:id/avaliacoes/resumo` devolve a média e a quantidade de avaliações visíveis na página do item. `GET /api/v1/itens/:id/avaliacao/minha` exige JWT e devolve a avaliação do usuário autenticado ou `null` se ele ainda não avaliou o item.
+
 `GET /api/v1/explorar/colecoes?q=nome` filtra coleções públicas pelo nome. `GET /api/v1/colecoes/minhas?q=nome` filtra as coleções da conta. `POST /api/v1/itens/busca` aceita `texto` para buscar por parte do nome do item, nome da coleção, rótulo ou chave de um atributo, ou valor de um atributo. Valores numéricos e datas são convertidos em texto para essa busca; `sim` e `não` também encontram valores booleanos. O campo combina com `filtros` e respeita `escopo` (`global` ou `minhas`). Em `minhas`, `colecao_id` pode restringir os itens a uma coleção. O texto aceita até 100 caracteres.
 
 Para ensaios de consulta em uma base separada, defina `MONGODB_DB=coleciona_carga` antes de iniciar a API. A base principal continua `coleciona`. O total da busca é mantido em cache no processo e invalidado nas mutações desta API; para várias instâncias da API, implemente invalidação distribuída antes de usar essa otimização em produção.

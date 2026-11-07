@@ -47,7 +47,7 @@ expect(await call(`/colecoes/${publicCollection.data.id}/itens`,{method:'POST',t
 expect(await call(`/colecoes/${publicCollection.data.id}/itens`,{method:'POST',token:t1,body:itemData('Muito grande','publica','x'),files:[Buffer.alloc(5*1024*1024+1)]}),422,'IMAGEM_INVALIDA');
 expect(await call(`/itens/${fiveImages.id}/imagens`,{method:'POST',token:t1,files:[png]}),409,'LIMITE_IMAGENS');
 expect(await call(`/imagens/${publicItem.imagens[0].id}`,{method:'DELETE',token:t1}),409,'ULTIMA_IMAGEM');
-for(const item of [hiddenItem,hiddenCollectionItem,fullyPrivateItem]){expect(await call(`/itens/${item.id}`,{token:t2}),404);expect(await call(`/imagens/${item.imagens[0].id}/arquivo`,{token:t2}),404);expect(await call(`/itens/${item.id}/avaliacoes/resumo`,{token:t2}),404)}
+for(const item of [hiddenItem,hiddenCollectionItem,fullyPrivateItem]){expect(await call(`/itens/${item.id}`,{token:t2}),404);expect(await call(`/imagens/${item.imagens[0].id}/arquivo`,{token:t2}),404);expect(await call(`/itens/${item.id}/avaliacoes/resumo`,{token:t2}),404);expect(await call(`/itens/${item.id}/avaliacao/minha`,{token:t2}),404)}
 expect(await call(`/itens/${hiddenItem.id}/avaliacao/minha`,{method:'PUT',token:t2,body:{nota:5}}),404);
 expect(await call(`/itens/${hiddenItem.id}/comentarios`,{method:'POST',token:t2,body:{texto:'Tentativa privada'}}),404);
 const search=await call('/itens/busca',{method:'POST',body:{escopo:'global',filtros:[{chave:'vram_gb',tipo:'numero',operador:'eq',valor:seed}]}});expect(search,200);assert.deepEqual(search.data.map(x=>x.id),[publicItem.id]);
@@ -92,7 +92,10 @@ expect(await call(`/itens/${publicItem.id}`,{method:'PATCH',token:t1,body:{descr
 expect(await call(`/itens/${publicItem.id}`,{method:'PATCH',token:t1,body:{atributos:Array.from({length:50},(_,i)=>({chave:`campo_${i}`,rotulo:'語'.repeat(50),tipo:'texto',valor:'語'.repeat(500)}))}}),422,'ITEM_GRANDE');
 expect(await call(`/itens/${publicItem.id}/comentarios`,{method:'POST',token:t2,body:{texto:'x'.repeat(1001)}}),422,'COMENTARIO_INVALIDO');
 expect(await call(`/itens/${publicItem.id}/avaliacao/minha`,{method:'PUT',token:t1,body:{nota:5}}),403,'INTERACAO_PROIBIDA');
+expect(await call(`/itens/${publicItem.id}/avaliacao/minha`),401);
+const beforeRating=await call(`/itens/${publicItem.id}/avaliacao/minha`,{token:t2});expect(beforeRating,200);assert.equal(beforeRating.data,null);checks++;
 expect(await call(`/itens/${publicItem.id}/avaliacao/minha`,{method:'PUT',token:t2,body:{nota:4}}),200);
+const ownRating=await call(`/itens/${publicItem.id}/avaliacao/minha`,{token:t2});expect(ownRating,200);assert.equal(ownRating.data.nota,4);checks++;
 const summary=await call(`/itens/${publicItem.id}/avaliacoes/resumo`);expect(summary,200);assert.equal(summary.data.media,4);
 const comment=await call(`/itens/${publicItem.id}/comentarios`,{method:'POST',token:t2,body:{texto:'<script>alert(1)</script>'}});expect(comment,201);assert.equal(comment.data.texto,'<script>alert(1)</script>');
 expect(await call(`/comentarios/${comment.data.id}`,{method:'PATCH',token:t1,body:{texto:'Tentativa'}}),403);
