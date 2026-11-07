@@ -99,11 +99,6 @@ textarea{min-height:95px;resize:vertical;line-height:1.5}
 .name-search-controls{display:flex;gap:8px;margin-top:8px}
 .name-search-controls input{flex:1;min-width:0}
 .name-search-controls button{white-space:nowrap}
-.collection-strip{display:flex;overflow:auto;margin:0 0 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.collection-chip{display:flex;flex-direction:column;justify-content:space-between;gap:25px;min-width:220px;flex:1;padding:20px 22px;border-right:1px solid var(--line)}
-.collection-chip:last-child{border-right:0}
-.collection-chip strong{font-family:'Newsreader Variable',Georgia,serif;font-size:24px;font-weight:600;line-height:1.1}
-.collection-chip small{font-size:12px;color:var(--muted)}
 .item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:24px 20px}
 .item-card{min-width:0;border-bottom:1px solid var(--line);padding-bottom:15px}
 .card-cover{aspect-ratio:4/3;background:#dce8e3;overflow:hidden}
