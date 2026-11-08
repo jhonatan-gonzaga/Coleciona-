@@ -14,6 +14,8 @@ Para substituir **todas** as coleções da base `coleciona` por um acervo com fo
 
 As fotos vêm de resultados do Flickr indexados pelo Openverse, filtrados para CC0 ou Public Domain Mark. A origem e o autor aparecem no detalhe do item e no arquivo local `storage/online-image-credits.json`. As contas usam a senha `coleciona-demo-123` por padrão (`SEED_PASSWORD` para alterá-la):
 
+Os itens de demonstração recebem os atributos Categoria, Licença e Autor da imagem para usar os filtros. Se o acervo já foi carregado antes dessa mudança, execute `node seed-online.js enrich` para preencher apenas itens de demonstração que ainda não têm atributos; o comando pode ser repetido.
+
 | Conta | Coleções |
 | --- | --- |
 | `ana.filatelia@coleciona.local` | Selos postais; Cartões postais |

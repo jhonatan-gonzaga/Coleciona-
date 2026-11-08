@@ -6,7 +6,7 @@ No editor de itens, digite uma etiqueta para ver sugestões das etiquetas que vo
 
 Em **Atributos personalizados**, cada característica tem nome, tipo e valor. O tipo **Opções** permite cadastrar vários valores para a mesma característica no item; os demais tipos mantêm um valor.
 
-Em **Explorar**, a página inicial mostra coleções públicas com foto de capa, dono e quantidade de itens. A busca encontra coleções pelo nome ou por itens e atributos contidos nelas. Abra uma coleção para ver seus itens, buscar dentro dela e combinar o termo com filtros por atributos. Em **Minhas coleções**, a busca inclui o acervo privado da conta.
+Em **Explorar**, a página inicial mostra coleções públicas com foto de capa, dono e quantidade de itens. A busca encontra coleções pelo nome ou por itens e atributos contidos nelas. Os filtros por atributos selecionam coleções que contêm itens públicos correspondentes e podem ser combinados com a busca. Abra uma coleção para ver seus itens, buscar dentro dela e filtrar seus atributos. Em **Minhas coleções**, a busca inclui o acervo privado da conta.
 
 Ao adicionar um filtro, digite no campo **Atributo** para ver sugestões dos atributos existentes. Escolha uma sugestão com clique ou com as setas e Enter.
 

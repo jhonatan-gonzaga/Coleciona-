@@ -9,6 +9,8 @@ export default function ExploreScreen({navigate,onError,collection}){
   const[collectionTotal,setCollectionTotal]=useState(0);
   const[collectionQuery,setCollectionQuery]=useState('');
   const[appliedCollectionQuery,setAppliedCollectionQuery]=useState('');
+  const[collectionFilters,setCollectionFilters]=useState([]);
+  const[appliedCollectionFilters,setAppliedCollectionFilters]=useState([]);
   const[items,setItems]=useState([]);
   const[available,setAvailable]=useState([]);
   const[filters,setFilters]=useState([]);
@@ -20,10 +22,10 @@ export default function ExploreScreen({navigate,onError,collection}){
   const collectionRequest=useRef(0);
   const itemRequest=useRef(0);
 
-  async function loadCollections(page=1,text=appliedCollectionQuery){
+  async function loadCollections(page=1,text=appliedCollectionQuery,nextFilters=appliedCollectionFilters){
     const current=++collectionRequest.current;
     try{
-      const result=await searchApi.explorar(page,text);
+      const result=await searchApi.explorar(page,text,compileFilters(nextFilters));
       if(current!==collectionRequest.current)return;
       setCollections(result.data);
       setCollectionTotal(result.meta.total);
@@ -43,12 +45,14 @@ export default function ExploreScreen({navigate,onError,collection}){
     }catch(error){if(current===itemRequest.current)onError(error)}
   }
 
-  useEffect(()=>{loadCollections(1,'')},[]);
+  useEffect(()=>{
+    loadCollections(1,'');
+    searchApi.filtros('global').then(result=>setAvailable(result.data)).catch(onError);
+  },[]);
   useEffect(()=>{
     itemRequest.current++;
     if(!collection)return;
     setFilters([]);setAppliedFilters([]);setItemQuery('');setAppliedItemQuery('');
-    searchApi.filtros('global').then(result=>setAvailable(result.data)).catch(onError);
     loadItems(collection,1,[],'');
   },[collection?.id]);
 
@@ -56,7 +60,12 @@ export default function ExploreScreen({navigate,onError,collection}){
     const term=text.trim();
     setCollectionQuery(term);
     setAppliedCollectionQuery(term);
-    loadCollections(1,term);
+    loadCollections(1,term,appliedCollectionFilters);
+  }
+
+  function applyCollectionFilters(next=collectionFilters){
+    setAppliedCollectionFilters(next);
+    loadCollections(1,appliedCollectionQuery,next);
   }
 
   function searchItems(text){
@@ -118,10 +127,11 @@ export default function ExploreScreen({navigate,onError,collection}){
       </div>
     </div>
     <div className="section-head"><h2>Coleções para explorar</h2><span className="muted">{collectionTotal} encontradas</span></div>
+    <SearchFilters available={available} filters={collectionFilters} onChange={setCollectionFilters} onSubmit={applyCollectionFilters}/>
     {collections.length?<div className="explore-collection-grid">{collections.map(entry=><article className="explore-collection-card" key={entry.id}>
       <div className="collection-card-cover">{entry.capa?<ImageGallery images={[entry.capa]} name={entry.nome}/>:<div className="image-placeholder">Sem foto</div>}</div>
       <div className="collection-card-body"><small>{entry.dono_nome?`Por ${entry.dono_nome}`:'Acervo público'} · {entry.quantidade_itens} itens</small><h3>{entry.nome}</h3><p>{entry.descricao}</p><button type="button" className="subtle" onClick={()=>navigate('explorar',{collection:entry})}>Ver coleção →</button></div>
-    </article>)}</div>:<p className="empty">{appliedCollectionQuery?'Nenhuma coleção encontrada para esta busca.':'Ainda não há coleções públicas.'}</p>}
+    </article>)}</div>:<p className="empty">{appliedCollectionQuery||appliedCollectionFilters.length?'Nenhuma coleção encontrada para esta busca.':'Ainda não há coleções públicas.'}</p>}
     {collectionTotal>20&&<div className="pagination"><button disabled={collectionPage<=1} onClick={()=>loadCollections(collectionPage-1)}>Anterior</button><span>Página {collectionPage}</span><button disabled={collectionPage*20>=collectionTotal} onClick={()=>loadCollections(collectionPage+1)}>Próxima</button></div>}
   </>;
 }

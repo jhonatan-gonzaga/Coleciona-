@@ -40,6 +40,11 @@ const accounts=[
 
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function clean(value,max=120){return String(value||'').replace(/<[^>]*>/g,'').replace(/\s+/g,' ').replace(/^File:/i,'').replace(/\.(jpe?g|png|webp)$/i,'').trim().slice(0,max)}
+function demoAttributes(category,license,author){return [
+  {chave:'categoria',rotulo:'Categoria',tipo:'opcao',valor:[category]},
+  {chave:'licenca',rotulo:'Licença',tipo:'opcao',valor:[license.toUpperCase()]},
+  {chave:'autor',rotulo:'Autor da imagem',tipo:'texto',valor:author}
+]}
 
 async function get(url,binary=false){
   for(let attempt=0;attempt<5;attempt++){
@@ -151,7 +156,7 @@ async function apply(){
             collectionDocs.push({_id:collectionId,usuario_id:owner._id,nome:topic.name,descricao:`Acervo demonstrativo de ${topic.name.toLowerCase()} com imagens abertas.`,visibilidade:'publica',estado:'ativa',criado_em:now,atualizado_em:now});
             for(let index=0;index<entry.photos.length;index++){
               const photo=entry.photos[index],itemId=new ObjectId(),title=`${topic.item} ${String(index+1).padStart(2,'0')} · ${photo.title}`.slice(0,100),created=new Date(now.getTime()+order++);
-              itemDocs.push({_id:itemId,colecao_id:collectionId,usuario_id:owner._id,nome:title,descricao:`Imagem de ${photo.author} via Flickr (${photo.license.toUpperCase()}).`,visibilidade:'publica',estado:'ativo',atributos:[],etiquetas:topic.tags,favorito:false,criado_em:created,atualizado_em:now});
+              itemDocs.push({_id:itemId,colecao_id:collectionId,usuario_id:owner._id,nome:title,descricao:`Imagem de ${photo.author} via Flickr (${photo.license.toUpperCase()}).`,visibilidade:'publica',estado:'ativo',atributos:demoAttributes(topic.name,photo.license,photo.author),etiquetas:topic.tags,favorito:false,criado_em:created,atualizado_em:now});
               imageDocs.push({_id:new ObjectId(),colecao_id:collectionId,item_id:itemId,usuario_id:owner._id,caminho:photo.filename,ordem:0,tipo_mime:'image/webp',tamanho_bytes:photo.bytes,estado:'ativa',remocoes_pendentes:[],origem_url:photo.source,origem_autor:photo.author,origem_licenca:photo.license,origem_titulo:photo.title,criado_em:now,atualizado_em:now});
             }
           }
@@ -174,5 +179,26 @@ async function apply(){
   }
 }
 
-async function main(){const command=process.argv[2];if(command==='prepare')await prepare();else if(command==='apply')await apply();else if(command==='run'){await prepare();await apply()}else throw new Error('Use prepare, apply ou run')}
+async function enrich(){
+  const client=new MongoClient(uri,{serverSelectionTimeoutMS:5000});
+  try{
+    await client.connect();
+    const db=client.db('coleciona');
+    const users=await db.collection('usuarios').find({email:{$in:accounts.map(account=>account.email)}},{projection:{_id:1}}).toArray();
+    const collections=await db.collection('colecoes').find({usuario_id:{$in:users.map(user=>user._id)},estado:'ativa'},{projection:{_id:1,nome:1}}).toArray();
+    const names=new Map(collections.map(collection=>[String(collection._id),collection.nome]));
+    const items=await db.collection('itens').find({colecao_id:{$in:collections.map(collection=>collection._id)},atributos:[]},{projection:{_id:1,colecao_id:1}}).toArray();
+    const images=await db.collection('imagens').find({item_id:{$in:items.map(item=>item._id)},estado:'ativa',ordem:0},{projection:{item_id:1,origem_autor:1,origem_licenca:1}}).toArray();
+    const imageByItem=new Map(images.map(image=>[String(image.item_id),image]));
+    const updates=items.map(item=>{
+      const image=imageByItem.get(String(item._id));
+      if(!image?.origem_autor||!image?.origem_licenca)throw new Error(`Metadados incompletos no item ${item._id}`);
+      return {updateOne:{filter:{_id:item._id,atributos:[]},update:{$set:{atributos:demoAttributes(names.get(String(item.colecao_id)),image.origem_licenca,image.origem_autor)}}}};
+    });
+    const updated=updates.length?(await db.collection('itens').bulkWrite(updates)).modifiedCount:0;
+    console.log(JSON.stringify({status:'enriquecido',colecoes:collections.length,itens_atualizados:updated}));
+  }finally{await client.close()}
+}
+
+async function main(){const command=process.argv[2];if(command==='prepare')await prepare();else if(command==='apply')await apply();else if(command==='run'){await prepare();await apply()}else if(command==='enrich')await enrich();else throw new Error('Use prepare, apply, run ou enrich')}
 main().catch(error=>{console.error(error);process.exitCode=1});
