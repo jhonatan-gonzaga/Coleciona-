@@ -28,14 +28,22 @@ async function baseFilter(escopo,actor){if(escopo==='minhas')return {usuario_id:
 function validatedFilters(filters){if(!Array.isArray(filters)||filters.length>3)fail(400,'FILTROS_INVALIDOS','Envie até três filtros.');return filters.map(f=>{if(!f||typeof f!=='object'||Array.isArray(f)||typeof f.chave!=='string'||! /^[a-z0-9_]{1,50}$/.test(f.chave)||!['texto','numero','data','booleano','opcao'].includes(f.tipo))fail(400,'FILTROS_INVALIDOS','Chave ou tipo inválido.');const allowed=f.tipo==='numero'||f.tipo==='data'?['eq','in','gte','lte']:['eq','in'];if(!allowed.includes(f.operador))fail(400,'FILTROS_INVALIDOS','Operador inválido.');let values=f.operador==='in'?f.valor:[f.valor];if(!Array.isArray(values)||!values.length||values.length>50)fail(400,'FILTROS_INVALIDOS','Valor inválido.');values=values.map(v=>{if(f.tipo==='numero'){if(typeof v!=='number'||!Number.isFinite(v))fail(400,'FILTROS_INVALIDOS','Número inválido.');return v}if(f.tipo==='booleano'){if(typeof v!=='boolean')fail(400,'FILTROS_INVALIDOS','Booleano inválido.');return v}if(f.tipo==='data'){if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v)||Number.isNaN(Date.parse(v)))fail(400,'FILTROS_INVALIDOS','Data inválida.');return new Date(`${v}T00:00:00.000Z`)}if(typeof v!=='string'||v.length>500)fail(400,'FILTROS_INVALIDOS','Texto inválido.');return v});return {atributos:{$elemMatch:{chave:f.chave,tipo:f.tipo,valor:f.operador==='in'?{$in:values}:f.operador==='eq'?values[0]:{[`$${f.operador}`]:values[0]}}}}})}
 async function explorar(query){
   const pg=page(query),term=searchTerm(query.q);
+  let requestedFilters=[];
+  if(query.filtros!==undefined){
+    try{requestedFilters=JSON.parse(query.filtros)}catch{fail(400,'FILTROS_INVALIDOS','Filtros inválidos.');}
+  }
+  const conditions=validatedFilters(requestedFilters);
   let matchingIds=null;
-  if(term){
+  if(term||conditions.length){
     const publicIds=await repo.publicCollectionIds();
-    const [nameIds,itemIds]=await Promise.all([
-      repo.collectionIdsByName('global',null,namePattern(term)),
-      repo.matchingItemCollectionIds({estado:'ativo',visibilidade:'publica',colecao_id:{$in:publicIds},...textConditions(term,[])})
+    const base={estado:'ativo',visibilidade:'publica',colecao_id:{$in:publicIds}};
+    const [nameIds,itemIds,filteredIds]=await Promise.all([
+      term?repo.collectionIdsByName('global',null,namePattern(term)):Promise.resolve([]),
+      term?repo.matchingItemCollectionIds({...base,$and:[textConditions(term,[]),...conditions]}):Promise.resolve([]),
+      conditions.length?repo.matchingItemCollectionIds({...base,$and:conditions}):Promise.resolve([])
     ]);
-    matchingIds=[...new Map([...nameIds,...itemIds].map(id=>[String(id),id])).values()];
+    const allowedByFilter=new Set(filteredIds.map(String));
+    matchingIds=[...new Map([...nameIds.filter(id=>!conditions.length||allowedByFilter.has(String(id))),...itemIds,...(!term?filteredIds:[])].map(id=>[String(id),id])).values()];
   }
   const result=await repo.publicCollections(pg.skip,pg.tamanho,matchingIds);
   const current=await Promise.all(result.rows.map(collection=>catalog.collection(collection._id)));
