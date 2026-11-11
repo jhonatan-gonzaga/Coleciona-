@@ -26,6 +26,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .subtle:hover{background:var(--soft)}
 .danger-link,.text-button{background:transparent;color:var(--danger);padding:7px 2px}
 .danger-link:hover,.text-button:hover{background:transparent;text-decoration:underline}
+.confirm-dialog{width:min(440px,calc(100% - 28px));max-height:calc(100dvh - 28px);padding:27px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink);box-shadow:0 22px 70px #102e3840}
+.confirm-dialog::backdrop{background:#102e38a8}
+.confirm-dialog h2{margin:0 0 10px;font-family:'Newsreader Variable',Georgia,serif;font-size:31px}
+.confirm-dialog p{line-height:1.5}
+.confirm-dialog .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+.confirm-dialog .confirm-error{color:var(--danger)}
+.confirm-danger{background:var(--danger)}
+.confirm-danger:hover{background:#7f3035}
 .inline-add{align-self:flex-start;background:transparent;border:1px dashed #91b7b0;color:var(--accent-dark);padding:8px 12px}
 .inline-add:hover{background:var(--soft)}
 .app{min-height:100dvh;display:flex;flex-direction:column}
