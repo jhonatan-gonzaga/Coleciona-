@@ -131,6 +131,7 @@ Na criação de um item, envie `multipart/form-data`: `dados` contém o JSON do 
 | Script | Finalidade |
 | --- | --- |
 | `seed.js` / `npm run seed` | Duas contas, três coleções, quatro itens e nove imagens de demonstração. |
+| `seed-snapshot.sh` / `npm run seed:snapshot -- ARQUIVO URI STORAGE` | Restaura um backup completo entregue separadamente, inclusive as fotos, em ambiente novo. |
 | `seed-online.js` / `npm run seed:online` | Acervo maior com fotos da internet e créditos: 12 coleções e 120 itens. |
 | `seed-load.js` / `npm run seed:load -- 100000` | Base separada para consultas; aceita 100000, 500000 ou 1000000 itens. |
 | `backup.sh [destino]` | `mongodump` e pacote de `storage/uploads/` com SHA-256. |
