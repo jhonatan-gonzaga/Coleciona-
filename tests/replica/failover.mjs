@@ -13,7 +13,7 @@ const privateItem=required(await api(`/colecoes/${collection.id}/itens`,{method:
 const publicItem=required(await api(`/colecoes/${collection.id}/itens`,{method:'POST',token,body:{nome:'Escrita RNF09',visibilidade:'publica'},files:[png]}),201,'item público');
 const initial=await Promise.all(ports.map(hello));if(initial.filter(x=>x?.isWritablePrimary).length!==1||initial.filter(x=>x?.secondary).length!==2)throw new Error('Replica set não está com 1 PRIMARY e 2 SECONDARY');
 const primary=ports[initial.findIndex(x=>x.isWritablePrimary)],marker=`marker${seed}@teste.local`;
-await mongo(primary,`db.getSiblingDB('coleciona').usuarios.insertOne({nome:'Marcador de maioria',email:'${marker}',senha_hash:'sem-login',tentativas_login:NumberInt(0),criado_em:new Date()},{writeConcern:{w:'majority'}});print('OK')`);
+await mongo(primary,`db.getSiblingDB('coleciona').usuarios.insertOne({nome:'Marcador de maioria',email:'${marker}',senha_hash:'sem-login',controle_login:{falhas_em:[],bloqueado_ate:null,versao:NumberInt(0)},criado_em:new Date()},{writeConcern:{w:'majority'}});print('OK')`);
 let stoppedPrimary=false,stoppedSecondary=null;const transient=[];let failoverMs,writeResumeMs,markerPreserved=false,privateProtected=false,secondaryWrite=false;
 try{
   const stopAt=Date.now();await run(path.join(root,'database/stop-node.sh'),[String(primary)],{timeout:35000});stoppedPrimary=true;

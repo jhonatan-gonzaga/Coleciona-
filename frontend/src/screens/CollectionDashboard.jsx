@@ -4,6 +4,7 @@ import {searchApi,compileFilters} from '../api/searchApi';
 import CollectionForm from '../components/CollectionForm';
 import SearchFilters from '../components/SearchFilters';
 import ImageGallery from '../components/ImageGallery';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function CollectionDashboard({navigate,onError}){
   const [collections,setCollections]=useState([]);
@@ -15,6 +16,7 @@ export default function CollectionDashboard({navigate,onError}){
   const [total,setTotal]=useState(0);
   const [form,setForm]=useState(undefined);
   const [busy,setBusy]=useState(false);
+  const [pendingDelete,setPendingDelete]=useState(null);
   const [available,setAvailable]=useState([]);
   const [filters,setFilters]=useState([]);
   const [appliedFilters,setAppliedFilters]=useState([]);
@@ -93,21 +95,26 @@ export default function CollectionDashboard({navigate,onError}){
   }
 
   async function removeCollection(collection){
-    if(!window.confirm(`Excluir "${collection.nome}" e todos os itens, fotos e interações?`))return;
-    try{
-      await catalogApi.excluir(collection.id);
-      setSelected(null);
-      loadCollections(appliedQuery,1);
-      await searchItems(appliedFilters,1,appliedQuery,null);
-    }catch(error){onError(error)}
+    setPendingDelete({kind:'collection',entry:collection});
   }
 
   async function removeItem(item){
-    if(!window.confirm(`Excluir o item "${item.nome}" e seus dados?`))return;
-    try{
-      await catalogApi.excluirItem(item.id);
+    setPendingDelete({kind:'item',entry:item});
+  }
+
+  async function confirmDelete(){
+    const {kind,entry}=pendingDelete;
+    if(kind==='collection'){
+      await catalogApi.excluir(entry.id);
+      setSelected(null);
+      await loadCollections(appliedQuery,1);
+      await searchItems(appliedFilters,1,appliedQuery,null);
+    }else{
+      await catalogApi.excluirItem(entry.id);
       await searchItems(appliedFilters,1,appliedQuery,selected);
-    }catch(error){onError(error)}
+      await loadCollections(appliedQuery,collectionPage);
+    }
+    setPendingDelete(null);
   }
 
   function applyFilters(next=filters){
@@ -116,6 +123,7 @@ export default function CollectionDashboard({navigate,onError}){
   }
 
   return <>
+    {pendingDelete&&<ConfirmDialog title={pendingDelete.kind==='collection'?'Excluir coleção?':'Excluir item?'} description={pendingDelete.kind==='collection'?`"${pendingDelete.entry.nome}" e todos os seus itens, fotos, avaliações e comentários serão excluídos.`:`"${pendingDelete.entry.nome}" e suas fotos, avaliações e comentários serão excluídos.`} onCancel={()=>setPendingDelete(null)} onConfirm={confirmDelete}/>}
     <div className="page-title"><div><p className="eyebrow">Acervo pessoal</p><h1>Minhas coleções</h1></div><button onClick={()=>setForm(null)}>+ Nova coleção</button></div>
     <form className="name-search panel" role="search" onSubmit={event=>{event.preventDefault();searchByName(query)}}>
       <label htmlFor="my-name-search">Coleção, item, atributo ou valor</label>

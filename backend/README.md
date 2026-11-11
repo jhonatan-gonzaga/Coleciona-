@@ -1,5 +1,7 @@
 # API Coleciona+
 
+`npm test` executa testes de regras e de recuperação; os testes de login, imagens e cascata usam uma base MongoDB temporária e exigem o replica set local ativo. Essas bases são removidas ao fim dos testes. Após atualizar uma instalação existente, execute `../database/setup.sh` antes de iniciar a API para migrar o controle de login.
+
 `npm install && npm start`. Copie `.env.example` para `.env` e troque `JWT_SECRET`. A API usa `/api/v1`, JWT Bearer, resposta `{data}` ou `{error}`. Cadastros de item enviam `multipart/form-data`: `dados` com JSON e `imagens` com 1–5 arquivos. Arquivos privados só saem por `/imagens/:id/arquivo` após autorização.
 
 Antes de iniciar, execute `../database/start-replica.sh` e `../database/setup.sh`. `GET /api/v1/health/live` testa o processo; `ready` testa leitura e escrita do primário. Erros de infraestrutura retornam 503.

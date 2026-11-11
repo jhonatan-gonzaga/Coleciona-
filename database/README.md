@@ -1,5 +1,7 @@
 # MongoDB local
 
+O controle de login fica em `usuarios.controle_login`: `falhas_em` guarda as tentativas dos últimos 15 minutos, `bloqueado_ate` indica o prazo de bloqueio e `versao` coordena atualizações concorrentes. `setup.sh` migra documentos antigos para esse formato antes de atualizar o validador, preservando um bloqueio ainda vigente e limpando os campos antigos depois. Execute `setup.sh` antes de iniciar a API após atualizar uma instalação existente.
+
 Testado com `mongod 8.3.9` e `mongosh 2.14.0` em Linux. Instale também MongoDB Database Tools para backup. Os arquivos `.conf` contêm o caminho absoluto desta máquina; adapte `dbPath`, log e PID se mover o projeto. Cada nó limita o cache WiredTiger a 0,5 GB para caberem três processos na máquina de 8 GB usada no ensaio.
 
 Execute `./start-replica.sh` e `./setup.sh` uma vez; repetir é seguro. URI: `mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/coleciona?replicaSet=rsColeciona`.
@@ -8,7 +10,7 @@ Execute `./start-replica.sh` e `./setup.sh` uma vez; repetir é seguro. URI: `mo
 
 `./backup.sh [destino]` inclui documentos e imagens, com SHA-256 do arquivo de imagens. `./restore.sh BACKUP URI_SEPARADA STORAGE_SEPARADO` restaura fora do ambiente de produção. Os backups gerados ficam fora do Git.
 
-Para dados demonstrativos, `npm install && npm run seed` nesta pasta cria dois usuários, três coleções, quatro itens, nove arquivos PNG reais, nota e comentário. Senha padrão: `coleciona-demo-123`; use `SEED_PASSWORD` para alterá-la. O script é idempotente por `seed_tag`.
+Para dados demonstrativos, `npm install && npm run seed` nesta pasta cria dois usuários, três coleções, quatro itens, nove fotos WebP de objetos reais, nota e comentário. As imagens e seus créditos estão em `assets/demo/`; as fontes são CC0 ou marcadas como domínio público nos locais indicados em `assets/demo/sources.json`. São fotos ilustrativas dos tipos de objeto do catálogo, não registros de um único exemplar. A seed substitui imagens antigas de 16 × 16 px dos quatro itens demonstrativos, preserva fotos adicionadas pelo usuário e pode ser repetida sem duplicar imagens. Senha padrão: `coleciona-demo-123`; use `SEED_PASSWORD` para alterá-la.
 
 Para substituir **todas** as coleções da base `coleciona` por um acervo com fotos da internet, execute `npm run seed:online` nesta pasta. O script baixa e valida as fotos antes de apagar as coleções, itens, imagens, avaliações e comentários antigos; mantém as outras contas. Cria seis contas, duas coleções públicas por conta, dez itens por coleção e uma foto WebP real por item (12 coleções, 120 itens, 120 fotos). É possível fazer as etapas separadamente com `node seed-online.js prepare` e, após conferir os arquivos em `storage/online-seed/`, `node seed-online.js apply`.
 

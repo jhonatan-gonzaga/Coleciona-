@@ -5,6 +5,7 @@ import ImageGallery from '../components/ImageGallery';
 import RatingForm from '../components/RatingForm';
 import RatingStars from '../components/RatingStars';
 import CommentList from '../components/CommentList';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 function attributeValue(attribute){
   if(attribute.tipo==='opcao'){
@@ -32,6 +33,7 @@ export default function ItemDetails({id,user,navigate,onError,fromCollection}){
   const[commentTotal,setCommentTotal]=useState(0);
   const[text,setText]=useState('');
   const[busy,setBusy]=useState(false);
+  const[pendingComment,setPendingComment]=useState(null);
 
   async function load(){
     try{
@@ -70,15 +72,20 @@ export default function ItemDetails({id,user,navigate,onError,fromCollection}){
   }
 
   async function deleteComment(commentId){
-    if(!confirm('Excluir este comentário?'))return;
-    try{await interactionApi.removerComentario(commentId);await load()}
-    catch(error){onError(error)}
+    setPendingComment(commentId);
+  }
+
+  async function confirmDeleteComment(){
+    await interactionApi.removerComentario(pendingComment);
+    await load();
+    setPendingComment(null);
   }
 
   if(!item)return <p>Carregando item...</p>;
   const owner=user?.id===item.usuario_id;
 
   return <>
+    {pendingComment&&<ConfirmDialog title="Excluir comentário?" description="Seu comentário será removido deste item." onCancel={()=>setPendingComment(null)} onConfirm={confirmDeleteComment}/>}
     <button className="subtle back" onClick={()=>fromCollection?navigate('explorar',{collection:fromCollection}):navigate(owner?'minhas':'explorar')}>← Voltar</button>
     <div className="detail-layout">
       <div>

@@ -1,15 +1,19 @@
 import React,{useEffect,useState}from'react';
 import{interactionApi}from'../api/interactionApi';
 import RatingStars from '../components/RatingStars';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 export default function MyInteractionsScreen({onError,navigate}){
   const[rows,setRows]=useState([]),[page,setPage]=useState(1),[total,setTotal]=useState(0);
   const[editing,setEditing]=useState(null),[text,setText]=useState('');
+  const[pendingDelete,setPendingDelete]=useState(null);
   async function load(p=page){try{const r=await interactionApi.minhas(p);setRows(r.data);setTotal(r.meta.total);setPage(p)}catch(error){onError(error)}}
   useEffect(()=>{load(1)},[]);
-  async function remove(row){if(!confirm('Excluir esta interação?'))return;try{if(row.tipo==='avaliacao')await interactionApi.removerNota(row.item_id);else await interactionApi.removerComentario(row.id);await load()}catch(error){onError(error)}}
+  function remove(row){setPendingDelete(row)}
+  async function confirmDelete(){if(pendingDelete.tipo==='avaliacao')await interactionApi.removerNota(pendingDelete.item_id);else await interactionApi.removerComentario(pendingDelete.id);await load();setPendingDelete(null)}
   async function saveComment(event){event.preventDefault();try{await interactionApi.editarComentario(editing,text);setEditing(null);await load()}catch(error){onError(error)}}
   return <>
+    {pendingDelete&&<ConfirmDialog title={pendingDelete.tipo==='avaliacao'?'Excluir avaliação?':'Excluir comentário?'} description="Esta interação será removida da sua lista." onCancel={()=>setPendingDelete(null)} onConfirm={confirmDelete}/>}
     <div className="page-title"><div><p className="eyebrow">Sua participação</p><h1>Minhas interações</h1></div></div>
     <p className="muted">Você pode excluir suas notas e comentários mesmo se o item ficar privado.</p>
     {rows.length?<div className="interaction-list">{rows.map(row=><article className="interaction-row" key={row.id}>
