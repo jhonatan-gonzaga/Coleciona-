@@ -1,5 +1,7 @@
 # MongoDB local
 
+O controle de login fica em `usuarios.controle_login`: `falhas_em` guarda as tentativas dos últimos 15 minutos, `bloqueado_ate` indica o prazo de bloqueio e `versao` coordena atualizações concorrentes. `setup.sh` migra documentos antigos para esse formato antes de atualizar o validador, preservando um bloqueio ainda vigente e limpando os campos antigos depois. Execute `setup.sh` antes de iniciar a API após atualizar uma instalação existente.
+
 Testado com `mongod 8.3.9` e `mongosh 2.14.0` em Linux. Instale também MongoDB Database Tools para backup. Os arquivos `.conf` contêm o caminho absoluto desta máquina; adapte `dbPath`, log e PID se mover o projeto. Cada nó limita o cache WiredTiger a 0,5 GB para caberem três processos na máquina de 8 GB usada no ensaio.
 
 Execute `./start-replica.sh` e `./setup.sh` uma vez; repetir é seguro. URI: `mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/coleciona?replicaSet=rsColeciona`.

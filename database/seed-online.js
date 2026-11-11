@@ -146,7 +146,7 @@ async function apply(){
           for(const name of ['avaliacoes','comentarios','imagens','itens','colecoes'])await db.collection(name).deleteMany({},{session});
           const now=new Date(),users=[];
           for(const account of accounts){
-            await db.collection('usuarios').updateOne({email:account.email},{$set:{nome:account.nome,senha_hash:hash,tentativas_login:0,falhas_em:null,bloqueado_ate:null,atualizado_em:now},$setOnInsert:{criado_em:now}},{upsert:true,session});
+            await db.collection('usuarios').updateOne({email:account.email},{$set:{nome:account.nome,senha_hash:hash,controle_login:{falhas_em:[],bloqueado_ate:null,versao:0},atualizado_em:now},$setOnInsert:{criado_em:now}},{upsert:true,session});
             users.push(await db.collection('usuarios').findOne({email:account.email},{session}));
           }
           const collectionDocs=[],itemDocs=[],imageDocs=[];
