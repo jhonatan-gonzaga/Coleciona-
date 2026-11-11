@@ -2,6 +2,14 @@
 
 Aplicação web para organizar coleções e itens, guardar fotos e atributos personalizados, explorar acervos públicos e interagir por avaliações e comentários. Este repositório reúne a implementação da atividade AVIII, o banco local, os testes e os relatórios dos ensaios.
 
+## Membros da equipe
+
+- JHONATAN GONZAGA GALDINO
+- KEVILY DA SILVA OLIVEIRA
+- OLIVIE KALIL DE MENEZES MIRANDA
+- RODRIGO TORRES
+- GEOVANNI FERREIRA MARQUES
+
 ## Visão geral
 
 | Parte | Tecnologia | Responsabilidade |
